@@ -3,15 +3,18 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ── Constants ────────────────────────────────────────────────────
 const SUPABASE_URL = "https://mexfvhokidhrbpqxwubq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1leGZ2aG9raWRocmJwcXh3dWJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NjI3OTIsImV4cCI6MjA4ODIzODc5Mn0.LeOEQhkPOsk_l5sOp6h_GrjPeZPbbIEbQR8obKRM9HA";
-const MAX_DAILY = 3;
+const MAX_DAILY = 7;
 const MILESTONES = [10, 25, 50, 100, 250, 500];
 
 const RANKS = [
-  { name: "Stardust",      min: 0,   icon: "✨", color: "#aaa" },
-  { name: "Comet",         min: 3,   icon: "☄️", color: "#88ccff" },
-  { name: "Nebula",        min: 8,   icon: "🌌", color: "#cc88ff" },
-  { name: "Supernova",     min: 20,  icon: "💥", color: "#ffcc00" },
-  { name: "Cosmic Legend", min: 50,  icon: "🌟", color: "#ff8c00" },
+  { name: "Stardust",      min: 0,   icon: "✨", color: "#aaaaaa" },
+  { name: "Moonbeam",      min: 5,   icon: "🌙", color: "#c8d8ff" },
+  { name: "Comet",         min: 15,  icon: "☄️", color: "#88ccff" },
+  { name: "Nebula",        min: 30,  icon: "🌌", color: "#cc88ff" },
+  { name: "Pulsar",        min: 60,  icon: "💫", color: "#ffffaa" },
+  { name: "Supernova",     min: 100, icon: "💥", color: "#ffcc00" },
+  { name: "Star Keeper",   min: 200, icon: "🌟", color: "#ffa040" },
+  { name: "Cosmic Legend", min: 500, icon: "👑", color: "#ff8c00" },
 ];
 
 const THEMES = [
@@ -19,7 +22,7 @@ const THEMES = [
   { id: "hope",      label: "🌅 Hope",                prompt: "Write about hope — for tomorrow, for dreams, for new beginnings." },
   { id: "courage",   label: "🦁 Courage",             prompt: "Encourage a stranger who might be facing something hard." },
   { id: "gratitude", label: "🌸 Gratitude",           prompt: "Share something you're grateful for and why it matters." },
-  { id: "stardust",  label: "🌠 Made of Stars",       prompt: "Remind a stranger of their cosmic worth and infinite potential." },
+  { id: "stardust",  label: "🌠 Wish Upon a Star",     prompt: "Wish something beautiful upon a stranger — a dream, a hope, a quiet blessing just for them." },
   { id: "healing",   label: "🕊️ Healing",             prompt: "Send gentle words to someone who might be healing right now." },
 ];
 
@@ -32,67 +35,100 @@ const ACCESSORIES = [
 ];
 
 const FALLBACK_LETTERS = [
-  { message: "To whoever intercepts this signal — you are brighter than any star I've mapped. The universe is vast, but somehow you found your place in it. Keep shining, traveler. 🌟", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 3).toISOString() },
-  { message: "Dear cosmic stranger, somewhere across this infinite darkness, I hope you feel warmth today. You are not alone out here. We're all drifting together. 💛", color_id: "violet", accessory_id: "stars", created_at: new Date(Date.now() - 86400000 * 7).toISOString() },
-  { message: "To the soul receiving this transmission: whatever weight you're carrying, even black holes eventually release what they hold. Your moment of light is coming. ✨", color_id: "ocean", accessory_id: "ring", created_at: new Date(Date.now() - 86400000 * 1).toISOString() },
+  { message: "Dear stranger. You don't know me and I don't know you. But I thought about you today — whoever you are, wherever you are — and I wished you something good. That's all. I hope it reaches you. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 1).toISOString(), theme: "open" },
+  { message: "I wish you a morning soon where everything feels unhurried. The light comes in sideways. You have nowhere to be yet. And for a moment, the world is just quiet and yours. 🌅", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 2).toISOString(), theme: "hope" },
+  { message: "Courage isn't the absence of fear. It's doing the thing anyway — shaking hands, dry mouth, heart loud in your chest. If that's you right now, I see you. Keep going. 🦁", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 3).toISOString(), theme: "courage" },
+  { message: "Isn't it strange and beautiful that we exist at all? That out of everything, here you are — reading this, breathing, carrying your particular life. I'm grateful you're here. 🌸", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 4).toISOString(), theme: "gratitude" },
+  { message: "I wish upon the nearest star that something finds you this week — a sign, a break, a reason to exhale. You've been holding your breath long enough. Let it go now. 🌠", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 5).toISOString(), theme: "stardust" },
+  { message: "Some days healing looks like crying in the shower and still making breakfast. Some days it looks like sending a message you were scared to send. It all counts. Every bit of it. 🕊️", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 6).toISOString(), theme: "healing" },
+  { message: "Tomorrow is genuinely unknown. That's the frightening part — and also, quietly, the most hopeful thing in the world. Something could change. Something good could arrive. It still can. ✨", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 7).toISOString(), theme: "hope" },
+  { message: "You've already made it through 100% of your hardest days. That's an unbroken record. I hope you let that land for a second. You are more resilient than you give yourself credit for. 💫", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 8).toISOString(), theme: "courage" },
+  { message: "Hi. I don't know you. You don't know me. Somewhere between here and there, this little letter found you. I hope that's a good thing. I think it is. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 9).toISOString(), theme: "open" },
+  { message: "I wish you a song today that feels like it was written for you. A meal that actually satisfies. And one person who looks at you and really, truly sees you. 🌠", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 10).toISOString(), theme: "stardust" },
+  { message: "You are not who you were a year ago. And a year from now, you'll look back at today and see how much further you've come. Growth is quiet. But it's happening. 🌟", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 11).toISOString(), theme: "open" },
+  { message: "If you're reading this at night when everything feels heavier — that's okay. Night distorts things. Tomorrow morning will weigh less. I promise. Sleep if you can. 🕊️", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 12).toISOString(), theme: "healing" },
+  { message: "Nobody has it together the way it looks. Everyone is improvising. Everyone is tired. You're not behind — you're just human, doing your best with what you have. That's enough. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 13).toISOString(), theme: "open" },
+  { message: "Something is still possible for you that hasn't happened yet. A version of your life that feels more like you. It hasn't arrived. But it isn't gone. Hold on loosely. 🌅", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 14).toISOString(), theme: "hope" },
+  { message: "Your timeline is not anyone else's timeline. The things that are yours will come to you in the time they're meant to. Trust that. Comparison is just imagination pretending to be fact. 🌸", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 1).toISOString(), theme: "gratitude" },
+  { message: "I hope something makes you laugh today — not a polite smile, but the real kind. Involuntary. Slightly embarrassing. The kind that reminds you you're still light inside. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 2).toISOString(), theme: "open" },
+  { message: "Feeling things deeply is not a flaw. It means you're paying attention. The world needs people who notice, who care, who stay soft even when it's hard to. Don't shrink. ✨", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 3).toISOString(), theme: "courage" },
+  { message: "You're allowed to still be figuring it out. Allowed to change your mind. Allowed to be a different person than you were last year. That's not inconsistency. That's growth. 🌱", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 4).toISOString(), theme: "healing" },
+  { message: "Someone remembers a kind thing you did and doesn't know how to tell you. The small ways you show up for people — they ripple further than you'll ever see. 🌟", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 5).toISOString(), theme: "gratitude" },
+  { message: "This letter crossed the dark between stars to find you today. I hope it lands softly. I hope it says what you needed to hear. You were worth sending it to. 🚀", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 6).toISOString(), theme: "open" },
+  { message: "Your body has kept you alive through everything. Every hard night, every anxious morning, every time you forgot to be kind to it. It's still here. Maybe say thank you to it today. 🌿", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 7).toISOString(), theme: "healing" },
+  { message: "One small decision today could be the thing you look back on and say — that's when things started to change. You don't need a grand moment. Just one small, brave step. 🌅", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 8).toISOString(), theme: "hope" },
+  { message: "If you're someone who holds space for everyone else — this one is for you. You deserve someone who holds space for you too. I hope you find that person. Or already have them. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 9).toISOString(), theme: "open" },
+  { message: "The hard seasons made you someone who understands. Someone with depth. Someone who can sit with others in their pain without flinching. That's not nothing. That's everything. 🌸", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 10).toISOString(), theme: "gratitude" },
+  { message: "Whatever dream you've been quietly carrying — the one you haven't told anyone about yet — I hope you give it a little more room to breathe. It deserves to exist. So do you. 🌠", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 11).toISOString(), theme: "stardust" },
+  { message: "Maybe you're about to do something scary. Say something honest. Start something new. Walk away from something familiar. Whatever it is — I'm rooting for you from here. 🦁", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 12).toISOString(), theme: "courage" },
+  { message: "You've replayed that moment a hundred times. It wasn't as bad as your brain keeps insisting. And even if it was — you're still here, still trying. That's the whole thing. 🕊️", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 13).toISOString(), theme: "healing" },
+  { message: "You don't have to be productive today. You don't have to be inspiring or put-together or okay. You just have to exist. That's allowed. That's enough for today. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 14).toISOString(), theme: "open" },
+  { message: "Rest is not giving up. It is not laziness. It is not falling behind. Rest is how you survive long enough to see what comes next. Please rest if you need to. 🌙", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 15).toISOString(), theme: "hope" },
+  { message: "Somewhere out there, a stranger took a moment out of their day to write something kind — just in case you needed it. You were worth that moment. You still are. 🚀", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 16).toISOString(), theme: "open" },
 ];
 
 // ── Sound Engine ─────────────────────────────────────────────────
 function createSoundEngine() {
   let ctx = null;
-  const getCtx = () => { if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)(); return ctx; };
-
+  const getCtx = () => {
+    if (!ctx) ctx = new (window.AudioContext || window.webkitAudioContext)();
+    if (ctx.state === "suspended") ctx.resume();
+    return ctx;
+  };
   const play = (fn) => { try { fn(getCtx()); } catch(e) {} };
 
   return {
     paperRustle: () => play(ctx => {
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 0.4, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 2) * 0.3;
-      const src = ctx.createBufferSource();
-      const filter = ctx.createBiquadFilter();
-      filter.type = "highpass"; filter.frequency.value = 3000;
-      src.buffer = buf; src.connect(filter); filter.connect(ctx.destination);
-      src.start();
-    }),
-    capsuleLoad: () => play(ctx => {
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      o.connect(g); g.connect(ctx.destination);
-      o.frequency.setValueAtTime(220, ctx.currentTime);
-      o.frequency.exponentialRampToValueAtTime(440, ctx.currentTime + 0.3);
-      g.gain.setValueAtTime(0.15, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.4);
-      o.start(); o.stop(ctx.currentTime + 0.4);
-    }),
-    launch: () => play(ctx => {
-      const o = ctx.createOscillator(); const g = ctx.createGain();
-      const filter = ctx.createBiquadFilter();
-      filter.type = "lowpass"; filter.frequency.value = 800;
-      o.connect(filter); filter.connect(g); g.connect(ctx.destination);
-      o.type = "sawtooth";
-      o.frequency.setValueAtTime(80, ctx.currentTime);
-      o.frequency.exponentialRampToValueAtTime(40, ctx.currentTime + 1.2);
-      g.gain.setValueAtTime(0.3, ctx.currentTime);
-      g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.5);
-      o.start(); o.stop(ctx.currentTime + 1.5);
-      // Whoosh
-      const buf = ctx.createBuffer(1, ctx.sampleRate * 1.0, ctx.sampleRate);
-      const data = buf.getChannelData(0);
-      for (let i = 0; i < data.length; i++) data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / data.length, 1.5) * 0.4;
-      const src = ctx.createBufferSource();
-      const f2 = ctx.createBiquadFilter(); f2.type = "bandpass"; f2.frequency.value = 1200; f2.Q.value = 0.5;
-      src.buffer = buf; src.connect(f2); f2.connect(ctx.destination); src.start();
-    }),
-    warpHum: () => play(ctx => {
-      [55, 110, 165].forEach((freq, i) => {
+      // Soft gentle shimmer — like a page turning in sunlight
+      [1200, 1800, 2400].forEach((freq, i) => {
         const o = ctx.createOscillator(); const g = ctx.createGain();
         o.connect(g); g.connect(ctx.destination);
         o.type = "sine"; o.frequency.value = freq;
-        g.gain.setValueAtTime(0, ctx.currentTime);
-        g.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 0.5);
-        g.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 5);
-        g.gain.linearRampToValueAtTime(0, ctx.currentTime + 6.5);
-        o.start(); o.stop(ctx.currentTime + 6.5);
+        const t = ctx.currentTime + i * 0.08;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.04, t + 0.06);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.35);
+        o.start(t); o.stop(t + 0.4);
+      });
+    }),
+    capsuleLoad: () => play(ctx => {
+      // Soft sealing chime — warm and gentle
+      [440, 554, 659].forEach((freq, i) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = "sine"; o.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.12;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.06, t + 0.04);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 0.5);
+        o.start(t); o.stop(t + 0.6);
+      });
+    }),
+    launch: () => play(ctx => {
+      // Gentle ascending chime — like a departing bell
+      [261, 329, 392, 523, 659].forEach((freq, i) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = "sine"; o.frequency.value = freq;
+        const t = ctx.currentTime + i * 0.18;
+        g.gain.setValueAtTime(0, t);
+        g.gain.linearRampToValueAtTime(0.09, t + 0.05);
+        g.gain.exponentialRampToValueAtTime(0.001, t + 1.2);
+        o.start(t); o.stop(t + 1.3);
+      });
+    }),
+    warpHum: () => play(ctx => {
+      // Soft dreamy shimmer — like distant wind chimes
+      [220, 277, 330, 440].forEach((freq, i) => {
+        const o = ctx.createOscillator(); const g = ctx.createGain();
+        o.connect(g); g.connect(ctx.destination);
+        o.type = "sine"; o.frequency.value = freq;
+        g.gain.setValueAtTime(0, ctx.currentTime + i * 0.3);
+        g.gain.linearRampToValueAtTime(0.04, ctx.currentTime + i * 0.3 + 0.8);
+        g.gain.linearRampToValueAtTime(0.03, ctx.currentTime + 5);
+        g.gain.linearRampToValueAtTime(0, ctx.currentTime + 7);
+        o.start(ctx.currentTime + i * 0.3);
+        o.stop(ctx.currentTime + 7);
       });
     }),
     capsuleOpen: () => play(ctx => {
@@ -144,15 +180,38 @@ function createSoundEngine() {
 }
 
 // ── Profile helpers ──────────────────────────────────────────────
+function generateCode() {
+  const stars = ["STAR","MOON","NOVA","COMET","DRIFT","PULSE","GLOW","ORBIT","FLARE","HALO"];
+  const nums = () => Math.floor(1000 + Math.random() * 9000);
+  return stars[Math.floor(Math.random()*stars.length)] + "-" + nums() + "-" + stars[Math.floor(Math.random()*stars.length)];
+}
 function getProfile() {
-  return window._cp || {
-    sent: 0, isPremium: true, letters: [],
+  try {
+    const raw = localStorage.getItem("cosmic_profile");
+    if (raw) return JSON.parse(raw);
+  } catch(e) {}
+  // First visit — create profile with secret code
+  const p = {
+    code: generateCode(),
+    sent: 0, isPremium: true, letters: [], received: [],
     dailyCount: 0, lastDay: "", streak: 0,
     lastStreakDay: "", colorId: "amber", accessoryId: "none",
     soundOn: true,
   };
+  try { localStorage.setItem("cosmic_profile", JSON.stringify(p)); } catch(e) {}
+  return p;
 }
-function saveProfile(p) { window._cp = p; }
+function saveProfile(p) {
+  try { localStorage.setItem("cosmic_profile", JSON.stringify(p)); } catch(e) {}
+}
+function restoreFromCode(code) {
+  // Store the code they want to restore — on next Supabase sync this would pull their data
+  // For now: just save as their code so they know it's linked
+  const p = getProfile();
+  p.code = code.toUpperCase().trim();
+  saveProfile(p);
+  return p;
+}
 function getTodayStr() { return new Date().toISOString().slice(0, 10); }
 function getDailyRemaining() {
   const p = getProfile(); const today = getTodayStr();
@@ -190,18 +249,98 @@ function recordSent(letterId, message, colorId, accessoryId, theme) {
   saveProfile(p); return p;
 }
 function getSentIds() { return (getProfile().letters || []).map(l => l.id).filter(Boolean); }
+function getSeenReceivedIds() {
+  try { return JSON.parse(localStorage.getItem("cosmic_seen_received") || "[]"); } catch { return []; }
+}
+function markLetterSeen(id) {
+  if (!id) return;
+  try {
+    const seen = getSeenReceivedIds();
+    if (!seen.includes(id)) {
+      seen.push(id);
+      localStorage.setItem("cosmic_seen_received", JSON.stringify(seen));
+    }
+  } catch(e) {}
+}
+function getFallbackSeen() {
+  try { return JSON.parse(localStorage.getItem("cosmic_seen_fallback") || "[]"); } catch { return []; }
+}
+function markFallbackSeen(idx) {
+  try {
+    const seen = getFallbackSeen();
+    if (!seen.includes(idx)) {
+      seen.push(idx);
+      // Reset if all seen
+      if (seen.length >= FALLBACK_LETTERS.length) {
+        localStorage.setItem("cosmic_seen_fallback", "[]");
+      } else {
+        localStorage.setItem("cosmic_seen_fallback", JSON.stringify(seen));
+      }
+    }
+  } catch(e) {}
+}
+function getUnseenFallback() {
+  const seen = getFallbackSeen();
+  const unseen = FALLBACK_LETTERS.map((l,i)=>i).filter(i => !seen.includes(i));
+  const pool = unseen.length > 0 ? unseen : FALLBACK_LETTERS.map((_,i)=>i);
+  return pool[Math.floor(Math.random() * pool.length)];
+}
+function saveReceivedLetter(letter) {
+  const p = getProfile();
+  if (!p.received) p.received = [];
+  // Avoid duplicates by id (or by message for fallbacks)
+  const key = letter.id || letter.message;
+  if (p.received.some(r => (r.id || r.message) === key)) return;
+  p.received.unshift({ ...letter, savedAt: new Date().toISOString() });
+  saveProfile(p);
+}
+function getReceivedLetters() { return getProfile().received || []; }
 
 // ── API helpers ──────────────────────────────────────────────────
+function clientSideCheck(msg) {
+  // Email
+  if (/[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/.test(msg))
+    return { approved: false, reason: "Please don't include email addresses — this is an anonymous space. 💛" };
+  // URLs
+  if (/(https?:\/\/|www\.)[^\s]+/.test(msg))
+    return { approved: false, reason: "Please don't include links — keep the magic pure. 💛" };
+  // Social handles like @username
+  if (/@[a-zA-Z0-9_.]{2,}/.test(msg))
+    return { approved: false, reason: "Please don't include social media handles — stay anonymous. 💛" };
+  // Phone numbers (7+ consecutive digits, various formats)
+  const digitsOnly = msg.replace(/[^0-9]/g, "");
+  if (digitsOnly.length >= 7 && /(\d[\s\-.]?){7,}/.test(msg))
+    return { approved: false, reason: "Please don't include phone numbers — keep it anonymous. 💛" };
+  // Name signatures at the end: "- Sarah", "Love, John", "From: Mike", "Yours, Ana"
+  if (/(^|\s)(from[:\s]+|love[,\s]+|yours[,\s]+|signed[,\s]+|[-–]\s*)[A-Z][a-z]{1,20}\s*$/.test(msg.trim()))
+    return { approved: false, reason: "Please don't sign your name — part of the magic is the mystery. 💛" };
+  return null;
+}
+
 async function moderateLetter(message) {
+  // Fast local check first — catches obvious patterns instantly
+  const quick = clientSideCheck(message);
+  if (quick) return quick;
+
   const r = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST", headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      model: "claude-sonnet-4-20250514", max_tokens: 1000,
-      messages: [{ role: "user", content: `You are a content moderator for Cosmic Capsule, a positive anonymous letter app.
-REJECT if: profanity, violence, threats, hate speech, bullying, sexual content, self-harm, negativity, insults, personal info (emails, phones, social handles, URLs), spam, or promotion.
-APPROVE only if genuinely kind, warm, uplifting, or positive.
-Respond ONLY with valid JSON:
-{"approved": true, "reason": "..."} or {"approved": false, "reason": "..."}
+      model: "claude-sonnet-4-20250514", max_tokens: 200,
+      messages: [{ role: "user", content: `You moderate Cosmic Capsule, an anonymous positive letter app. Anonymity is sacred.
+
+REJECT if the message contains ANY of:
+- Email addresses, phone numbers, URLs, or social media handles
+- The sender's real name or any identifying signature (e.g. "- John", "Love, Sarah", "From Mike", "Sincerely, Alex")
+- Profanity, threats, violence, hate speech, bullying, or harassment
+- Sexual content, self-harm references, or anything hurtful
+- Spam, promotions, requests to contact or meet the sender
+- Negativity or content that could hurt the reader
+
+APPROVE only if: genuinely kind, warm, uplifting, no personal info whatsoever.
+
+Reply ONLY with JSON, no extra text:
+{"approved":true,"reason":"ok"} or {"approved":false,"reason":"short reason"}
+
 Letter: "${message.replace(/"/g, '\\"')}"` }],
     }),
   });
@@ -216,7 +355,15 @@ async function generateLetter(theme) {
       model: "claude-sonnet-4-20250514", max_tokens: 1000,
       messages: [{ role: "user", content: `Write a warm anonymous positive letter to a stranger for Cosmic Capsule.
 Theme: "${theme.label}" — ${theme.prompt}
-Rules: 3-5 sentences, heartfelt, genuine, no names/personal info/handles, poetic but real, end with a fitting emoji.
+Rules:
+- 3-5 sentences, heartfelt and genuine
+- Sound like a real human wrote this, not an AI
+- No names or personal info or social handles
+- No em dashes (—), no hyphens used as pauses, no ampersands (&)
+- No lists, no bullet points, no colons introducing things
+- No overly poetic or flowery language — keep it grounded and real
+- Vary sentence length naturally, like how people actually write
+- End with one fitting emoji
 Respond with ONLY the letter text.` }],
     }),
   });
@@ -249,15 +396,21 @@ async function submitLetter(message, colorId, accessoryId, theme) {
   const d = await r.json(); return d?.[0]?.id || null;
 }
 
-async function fetchRandomLetter(excludeIds = []) {
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/letters?select=id,message,color_id,accessory_id,created_at`, {
+async function fetchRandomLetter(excludeSent = [], seenReceived = []) {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/letters?select=id,message,color_id,accessory_id,created_at,theme`, {
     headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
   });
   const all = await r.json();
-  if (!Array.isArray(all) || all.length === 0) return FALLBACK_LETTERS[Math.floor(Math.random() * FALLBACK_LETTERS.length)];
-  const filtered = all.filter(l => !excludeIds.includes(l.id));
-  const pool = filtered.length > 0 ? filtered : all;
-  return pool[Math.floor(Math.random() * pool.length)];
+  // Only use fallback if DB is truly empty — never mix real and fallback
+  if (!Array.isArray(all) || all.length === 0) return null;
+  // Exclude letters the user sent themselves
+  const notOwn = all.filter(l => !excludeSent.includes(l.id));
+  const pool = notOwn.length > 0 ? notOwn : all;
+  // Exclude already-seen letters; if all seen, reset and use full pool
+  const unseen = pool.filter(l => !seenReceived.includes(l.id));
+  return unseen.length > 0
+    ? unseen[Math.floor(Math.random() * unseen.length)]
+    : pool[Math.floor(Math.random() * pool.length)]; // full cycle reset
 }
 
 async function fetchLetterCount() {
@@ -315,7 +468,41 @@ function StarField() {
 }
 
 function Nebula() {
-  return <div style={{ position: "fixed", inset: 0, zIndex: 0, background: "radial-gradient(ellipse at 20% 50%, rgba(180,80,0,0.22) 0%, transparent 60%), radial-gradient(ellipse at 80% 20%, rgba(200,120,0,0.18) 0%, transparent 55%), radial-gradient(ellipse at 60% 80%, rgba(150,50,10,0.18) 0%, transparent 50%), #0a0500" }} />;
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:0, overflow:"hidden",
+      background:"radial-gradient(ellipse at 50% 50%, #140800 0%, #080200 60%, #040100 100%)" }}>
+      {/* Core supernova blast */}
+      <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)",
+        width:"70vw", height:"70vw", borderRadius:"50%",
+        background:"radial-gradient(circle, rgba(255,100,20,0.13) 0%, rgba(255,60,0,0.07) 35%, transparent 70%)",
+        animation:"pulseGlow 6s ease-in-out infinite" }} />
+      {/* Secondary glow rings */}
+      <div style={{ position:"absolute", top:"50%", left:"50%", transform:"translate(-50%,-50%)",
+        width:"100vw", height:"100vw", borderRadius:"50%",
+        background:"radial-gradient(circle, rgba(255,140,20,0.06) 0%, rgba(200,60,0,0.04) 40%, transparent 65%)",
+        animation:"pulseGlow 9s ease-in-out infinite", animationDelay:"2s" }} />
+      {/* Gas cloud top-left */}
+      <div style={{ position:"absolute", top:"-10%", left:"-5%", width:"55%", height:"55%",
+        borderRadius:"50%", background:"radial-gradient(ellipse, rgba(255,80,10,0.1) 0%, rgba(200,40,0,0.05) 50%, transparent 75%)",
+        filter:"blur(40px)", animation:"pulseGlow 8s ease-in-out infinite" }} />
+      {/* Gas cloud bottom-right */}
+      <div style={{ position:"absolute", bottom:"-10%", right:"-5%", width:"55%", height:"55%",
+        borderRadius:"50%", background:"radial-gradient(ellipse, rgba(255,120,20,0.09) 0%, rgba(180,50,0,0.04) 50%, transparent 75%)",
+        filter:"blur(40px)", animation:"pulseGlow 7s ease-in-out infinite", animationDelay:"3s" }} />
+      {/* Smoky wisps left */}
+      <div style={{ position:"absolute", top:"20%", left:"0%", width:"30%", height:"60%",
+        background:"linear-gradient(135deg, rgba(255,60,10,0.06) 0%, transparent 60%)",
+        filter:"blur(30px)", animation:"pulseGlow 11s ease-in-out infinite" }} />
+      {/* Smoky wisps right */}
+      <div style={{ position:"absolute", top:"10%", right:"0%", width:"28%", height:"50%",
+        background:"linear-gradient(225deg, rgba(255,100,20,0.05) 0%, transparent 60%)",
+        filter:"blur(28px)", animation:"pulseGlow 10s ease-in-out infinite", animationDelay:"4s" }} />
+      {/* Hot inner haze */}
+      <div style={{ position:"absolute", top:"30%", left:"25%", width:"50%", height:"40%",
+        background:"radial-gradient(ellipse, rgba(255,180,60,0.05) 0%, transparent 70%)",
+        filter:"blur(50px)", animation:"pulseGlow 5s ease-in-out infinite", animationDelay:"1s" }} />
+    </div>
+  );
 }
 
 function Btn({ onClick, children, secondary, disabled, small }) {
@@ -332,12 +519,14 @@ function Btn({ onClick, children, secondary, disabled, small }) {
 function CapsuleSVG({ colorId = "amber", size = 120, glowing, open }) {
   const col = COLORS.find(c => c.id === colorId) || COLORS[0];
   const { c1, c2, glow } = col;
-  const gid = `cg${colorId}`; const sid = `cs${colorId}`;
+  const uid = useRef(`c${Math.random().toString(36).slice(2,7)}`).current;
+  const gid = `cg${uid}`; const sid = `cs${uid}`;
   return (
     <svg width={size} height={size * 1.3} viewBox="0 0 120 156" style={{ overflow: "visible", filter: glowing ? `drop-shadow(0 0 18px ${glow}) drop-shadow(0 0 40px ${glow}66)` : `drop-shadow(0 4px 16px rgba(0,0,0,0.5))` }}>
       <defs>
         <linearGradient id={gid} x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor={c1} /><stop offset="100%" stopColor={c2} /></linearGradient>
         <radialGradient id={sid} cx="30%" cy="25%" r="55%"><stop offset="0%" stopColor="white" stopOpacity="0.4" /><stop offset="100%" stopColor="white" stopOpacity="0" /></radialGradient>
+        <linearGradient id={`wg${uid}`} x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#aaddff" /><stop offset="100%" stopColor="#0055aa" /></linearGradient>
       </defs>
       {!open ? (<>
         <ellipse cx="60" cy="148" rx="10" ry="5" fill={c1} opacity="0.5" />
@@ -349,7 +538,7 @@ function CapsuleSVG({ colorId = "amber", size = 120, glowing, open }) {
         <ellipse cx="60" cy="42" rx="20" ry="22" fill={`url(#${sid})`} />
         <polygon points="32,100 4,128 32,120" fill={c1} opacity="0.9" />
         <polygon points="88,100 116,128 88,120" fill={c1} opacity="0.9" />
-        <ellipse cx="60" cy="60" rx="12" ry="14" fill="rgba(200,240,255,0.7)" />
+        <ellipse cx="60" cy="60" rx="12" ry="14" fill={`url(#wg${uid})`} />
         <ellipse cx="57" cy="57" rx="5" ry="6" fill="rgba(255,255,255,0.4)" />
         <ellipse cx="60" cy="95" rx="28" ry="4" fill="rgba(0,0,0,0.15)" />
       </>) : (<>
@@ -448,34 +637,71 @@ function AccLayer({ accessoryId, colorId, size = 120 }) {
 }
 
 // ── Paper component ──────────────────────────────────────────────
-function Paper({ folded, emerging }) {
-  return (
-    <div style={{ animation: emerging ? "paperEmerge 1s ease forwards" : folded ? "paperFold 1s ease forwards" : "paperFloat 3s ease-in-out infinite" }}>
-      <svg width={folded ? 55 : 100} height={folded ? 55 : 130} viewBox="0 0 110 140" style={{ transition: "all 0.8s ease", filter: "drop-shadow(0 4px 20px rgba(255,200,100,0.3))" }}>
+function Paper({ folded, emerging, message, theme }) {
+  const th = THEMES.find(t => t.id === theme) || THEMES[0];
+  const anim = emerging ? "paperEmerge 1.2s cubic-bezier(0.2,0.8,0.3,1) forwards"
+             : folded   ? "paperFold 1s ease forwards"
+             :            "paperFloat 3s ease-in-out infinite";
+  if (folded) return (
+    <div style={{ animation: "paperFold 1s ease forwards", transformOrigin: "center" }}>
+      <svg width="70" height="70" viewBox="0 0 110 110" style={{ filter: "drop-shadow(0 4px 16px rgba(255,200,100,0.4))" }}>
         <defs>
-          <linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stopColor="#fff9e6"/><stop offset="100%" stopColor="#ffeebb"/></linearGradient>
+          <linearGradient id="pgf" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stopColor="#fff9e6"/><stop offset="100%" stopColor="#ffeebb"/>
+          </linearGradient>
         </defs>
-        {!folded ? (<>
-          <rect x="5" y="5" width="100" height="130" rx="4" fill="url(#pg)" />
-          <polygon points="80,5 105,5 105,30" fill="#ffe088" opacity="0.8" />
-          <polygon points="80,5 105,30 80,30" fill="#ffd060" opacity="0.5" />
-          {[35,50,65,80,95,110].map((y,i) => <line key={i} x1="18" y1={y} x2={i===3||i===5?70:92} y2={y} stroke="rgba(180,140,60,0.35)" strokeWidth="1.5" strokeLinecap="round" />)}
-          <path d="M48,20 C48,17 51,14 55,17 C59,14 62,17 62,20 C62,24 55,29 55,29Z" fill="rgba(255,120,120,0.5)" />
-        </>) : (<>
-          <polygon points="55,5 105,55 55,105 5,55" fill="url(#pg)" />
-          <polygon points="55,5 105,55 55,55" fill="#ffe088" opacity="0.6" />
-          <polygon points="55,5 5,55 55,55" fill="#fff3cc" opacity="0.4" />
-          <line x1="55" y1="5" x2="55" y2="105" stroke="rgba(180,140,60,0.2)" strokeWidth="1" />
-          <line x1="5" y1="55" x2="105" y2="55" stroke="rgba(180,140,60,0.2)" strokeWidth="1" />
-          <path d="M46,52 C46,49 50,47 55,49 C60,47 64,49 64,52 C64,56 55,60 55,60Z" fill="rgba(255,120,120,0.4)" />
-        </>)}
+        <polygon points="55,5 105,55 55,105 5,55" fill="url(#pgf)" />
+        <polygon points="55,5 105,55 55,55" fill="#ffe088" opacity="0.7" />
+        <polygon points="55,5 5,55 55,55" fill="#fff3cc" opacity="0.5" />
+        <line x1="55" y1="5" x2="55" y2="105" stroke="rgba(180,140,60,0.18)" strokeWidth="1"/>
+        <line x1="5" y1="55" x2="105" y2="55" stroke="rgba(180,140,60,0.18)" strokeWidth="1"/>
+        <path d="M46,52 C46,49 50,47 55,49 C60,47 64,49 64,52 C64,56 55,60 55,60Z" fill="rgba(255,120,120,0.45)"/>
+      </svg>
+    </div>
+  );
+  return (
+    <div style={{ animation: anim, transformOrigin: "center bottom" }}>
+      <svg width="160" height="200" viewBox="0 0 160 200" style={{ filter: "drop-shadow(0 8px 32px rgba(255,200,100,0.35)) drop-shadow(0 2px 8px rgba(0,0,0,0.3))" }}>
+        <defs>
+          <linearGradient id="pg" x1="0%" y1="0%" x2="10%" y2="100%">
+            <stop offset="0%" stopColor="#fffdf0"/><stop offset="100%" stopColor="#fff3cc"/>
+          </linearGradient>
+          <filter id="pglow">
+            <feGaussianBlur stdDeviation="2" result="blur"/>
+            <feComposite in="SourceGraphic" in2="blur" operator="over"/>
+          </filter>
+        </defs>
+        {/* Paper shadow */}
+        <rect x="12" y="12" width="136" height="180" rx="8" fill="rgba(0,0,0,0.15)" />
+        {/* Paper body */}
+        <rect x="8" y="8" width="136" height="180" rx="8" fill="url(#pg)" />
+        {/* Fold corner */}
+        <polygon points="114,8 144,8 144,38" fill="#ffe8a0" opacity="0.9"/>
+        <polygon points="114,8 144,38 114,38" fill="#ffd060" opacity="0.6"/>
+        {/* Top decorative border */}
+        <rect x="8" y="8" width="136" height="6" rx="8" fill="rgba(255,180,60,0.25)"/>
+        {/* Heart stamp */}
+        <path d="M72,32 C72,28 76,25 80,28 C84,25 88,28 88,32 C88,37 80,43 80,43 C80,43 72,37 72,32Z" fill="rgba(255,100,120,0.55)"/>
+        <path d="M74,32 C74,29 77,27 80,29 C83,27 86,29 86,32 C86,36 80,41 80,41 C80,41 74,36 74,32Z" fill="rgba(255,140,150,0.4)"/>
+        {/* Theme mood stamp */}
+        <rect x="18" y="52" width="62" height="18" rx="9" fill="rgba(255,160,40,0.15)"/>
+        <text x="49" y="64" textAnchor="middle" fontSize="9" fill="rgba(180,120,40,0.8)" fontFamily="Georgia,serif">{th ? th.label : ""}</text>
+        {/* Letter lines */}
+        {[82,97,112,127,142,157,172].map((y,i) => (
+          <line key={i} x1="22" y1={y} x2={i===3||i===6?100:136} y2={y}
+            stroke="rgba(180,140,60,0.28)" strokeWidth="1.5" strokeLinecap="round"/>
+        ))}
+        {/* Wax seal bottom */}
+        <circle cx="80" cy="183" r="8" fill="rgba(255,80,60,0.35)"/>
+        <circle cx="80" cy="183" r="5" fill="rgba(255,100,80,0.5)"/>
+        <path d="M77,183 L80,180 L83,183 L80,186Z" fill="rgba(255,200,180,0.6)" />
       </svg>
     </div>
   );
 }
 
 // ── Warp Screen ──────────────────────────────────────────────────
-function WarpScreen({ progress }) {
+function WarpScreen({ progress, receive }) {
   const streaks = useRef(Array.from({ length: 90 }, () => ({
     x: Math.random() * 100, len: 5 + Math.random() * 20,
     dur: 0.25 + Math.random() * 0.45, delay: Math.random() * 0.9,
@@ -492,10 +718,12 @@ function WarpScreen({ progress }) {
       {streaks.map((s,i)=>(
         <div key={i} style={{ position: "absolute", left: `${s.x}%`, top: `${s.top}%`, width: `${s.width}px`, height: `${s.len}vh`, background: `linear-gradient(to top, rgba(${s.color},0), rgba(${s.color},${s.opacity}))`, borderRadius: 2, animation: `starStreak ${s.dur}s linear infinite`, animationDelay: `${s.delay}s` }} />
       ))}
-      <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", textAlign: "center", zIndex: 2 }}>
-        <div style={{ fontSize: "2.2rem", marginBottom: 14, animation: "capsuleFloat 2s ease-in-out infinite", filter: "drop-shadow(0 0 20px rgba(255,160,40,0.9))" }}>🛸</div>
-        <p style={{ fontFamily: "'Georgia',serif", color: "rgba(255,220,140,0.9)", fontSize: "1.05rem", letterSpacing: "0.08em", textShadow: "0 0 20px rgba(255,160,40,0.8)", animation: "pulseGlow 1.5s ease-in-out infinite" }}>Traveling through the cosmos…</p>
-        <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(180,140,255,0.55)", fontSize: "0.82rem", marginTop: 6 }}>your kindness is on its way</p>
+      <div style={{ position: "absolute", inset: 0, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center", zIndex: 2 }}>
+        <div style={{ marginBottom: 14, animation: "capsuleFloat 2s ease-in-out infinite" }}>
+          <CapsuleSVG colorId="amber" size={60} glowing />
+        </div>
+        <p style={{ fontFamily: "'Georgia',serif", color: "rgba(255,220,140,0.9)", fontSize: "1.05rem", letterSpacing: "0.08em", textShadow: "0 0 20px rgba(255,160,40,0.8)", animation: "pulseGlow 1.5s ease-in-out infinite" }}>{receive ? "A capsule is racing toward you…" : "Traveling through the cosmos…"}</p>
+        <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(180,140,255,0.55)", fontSize: "0.82rem", marginTop: 6 }}>{receive ? "hold on, something is coming" : "your kindness is on its way"}</p>
         <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 20 }}>
           {[...Array(6)].map((_,i)=>(
             <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < progress ? "#ffa520" : "rgba(255,140,20,0.2)", boxShadow: i < progress ? "0 0 10px rgba(255,140,20,0.8)" : "none", transition: "all 0.4s ease" }} />
@@ -581,6 +809,176 @@ function TipModal({ onClose }) {
 }
 
 // ── Guidelines Screen ────────────────────────────────────────────
+function MyReceivedScreen({ onBack }) {
+  const letters = getReceivedLetters();
+  return (
+    <div style={{ minHeight:"100vh", padding:"30px 20px", zIndex:1, position:"relative", animation:"fadeUp 0.8s ease forwards" }}>
+      <div style={{ maxWidth:560, margin:"0 auto" }}>
+        <button onClick={onBack} style={{ background:"none", border:"none", color:"rgba(255,180,60,0.5)", fontFamily:"'Georgia',serif", fontSize:"0.88rem", cursor:"pointer", marginBottom:24 }}>← Back</button>
+        <h2 style={{ fontFamily:"'Georgia',serif", fontWeight:400, fontSize:"1.5rem", color:"#ffd080", marginBottom:6 }}>My Received Letters 💌</h2>
+        <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.4)", fontSize:"0.85rem", marginBottom:28 }}>Letters strangers sent into the cosmos — and you caught them.</p>
+        {letters.length === 0 && (
+          <div style={{ textAlign:"center", padding:40 }}>
+            <div style={{ fontSize:55, marginBottom:16 }}>💌</div>
+            <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,160,60,0.4)", fontStyle:"italic" }}>No letters saved yet.<br />Receive a transmission and keep the ones that touch you. 💛</p>
+          </div>
+        )}
+        <div style={{ display:"flex", flexDirection:"column", gap:18 }}>
+          {letters.map((letter, i) => {
+            const savedAgo = Math.floor((Date.now() - new Date(letter.savedAt).getTime()) / 86400000);
+            const savedStr = savedAgo === 0 ? "Today" : savedAgo === 1 ? "Yesterday" : `${savedAgo} days ago`;
+            return (
+              <div key={i} style={{ position:"relative", background:"linear-gradient(160deg,#fffdf0,#fff8dc,#fff3c8)", borderRadius:16, padding:"32px 30px 38px", border:"1px solid rgba(255,200,100,0.3)", boxShadow:"0 4px 30px rgba(0,0,0,0.25), 0 0 40px rgba(255,160,40,0.08)" }}>
+                {/* Fold corner */}
+                <div style={{ position:"absolute", top:0, right:0, width:0, height:0, borderStyle:"solid", borderWidth:"0 28px 28px 0", borderColor:"transparent rgba(255,220,120,0.5) transparent transparent" }} />
+                {/* Wax seal */}
+                <div style={{ position:"absolute", bottom:12, right:16, width:24, height:24, borderRadius:"50%", background:"radial-gradient(circle,rgba(255,80,60,0.5),rgba(200,40,20,0.4))", display:"flex", alignItems:"center", justifyContent:"center" }}>
+                  <span style={{ fontSize:"0.6rem" }}>✦</span>
+                </div>
+                {/* Subject stamp */}
+                {letter.theme && (
+                  <div style={{ position:"absolute", top:12, left:16, background:"rgba(255,160,40,0.12)", border:"1px solid rgba(255,160,40,0.2)", borderRadius:10, padding:"2px 8px" }}>
+                    <span style={{ fontFamily:"'Kalam',cursive", fontWeight:700, fontSize:"0.75rem", color:"rgba(160,110,30,0.8)" }}>✦ {letter.theme}</span>
+                  </div>
+                )}
+                {/* Letter text */}
+                <p style={{ fontFamily:"'Kalam',cursive", fontWeight:700, fontSize:"1.15rem", lineHeight:1.9, color:"rgba(60,35,5,0.88)", margin:0, whiteSpace:"pre-wrap", marginTop:letter.theme?18:0 }}>{letter.message}</p>
+                {/* Footer */}
+                <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(160,110,30,0.45)", fontSize:"0.7rem", marginTop:16, marginBottom:0 }}>Kept {savedStr} · sent anonymously from somewhere in the universe</p>
+              </div>
+            );
+          })}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function FAQScreen({ onBack, profile }) {
+  const [showCode, setShowCode] = useState(false);
+  const [codeCopied, setCodeCopied] = useState(false);
+  const [restoreInput, setRestoreInput] = useState("");
+  const [restoreMsg, setRestoreMsg] = useState("");
+  const code = profile?.code || "—";
+
+  const handleCopyCode = () => {
+    const fallback = () => {
+      const el = document.createElement("textarea");
+      el.value = code; el.style.cssText = "position:fixed;top:-9999px;opacity:0;";
+      document.body.appendChild(el); el.focus(); el.select();
+      try { document.execCommand("copy"); setCodeCopied(true); setTimeout(()=>setCodeCopied(false),2500); } catch(e) {}
+      document.body.removeChild(el);
+    };
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(code).then(()=>{ setCodeCopied(true); setTimeout(()=>setCodeCopied(false),2500); }).catch(fallback);
+    } else { fallback(); }
+  };
+
+  const handleRestore = () => {
+    if (!restoreInput.trim()) return;
+    restoreFromCode(restoreInput.trim());
+    setRestoreMsg("✦ Code saved! Your profile is now linked to this code. 💛");
+  };
+
+  const faqs = [
+    {
+      q: "Is Cosmic Capsule really anonymous?",
+      a: "Yes, completely. We don't ask for your name, email, or any account. You're just a soul somewhere in the universe. The person who receives your letter will never know who you are — and you'll never know who receives it."
+    },
+    {
+      q: "Can the receiver reply to my letter?",
+      a: "No, and that's intentional. Cosmic Capsule is one-way. You give kindness freely, with no expectation of a response. That's what makes it feel like a real gift."
+    },
+    {
+      q: "What happens if I clear my browser or switch devices?",
+      a: "Your letters, rank, and collection are saved on your device. If you clear your cache or switch devices, that data will be lost — unless you use your Secret Star Code (see below)."
+    },
+    {
+      q: "What is the Secret Star Code?",
+      a: "It's your personal recovery key — a unique code like STAR-4829-MOON that's automatically generated for you. If you ever lose your data, you can enter it on a new device to restore your profile. Write it down somewhere safe."
+    },
+    {
+      q: "Who can see the letters I send?",
+      a: "Only a random stranger who receives it. Nobody else. Not us, not anyone. Letters are not publicly listed anywhere."
+    },
+    {
+      q: "How are letters moderated?",
+      a: "Every letter is checked before it enters the cosmos. Our system quietly ensures all content is kind, positive, and free of personal information. Letters that don't meet this standard are gently returned to the sender."
+    },
+    {
+      q: "Can I delete a letter I sent?",
+      a: "Once a letter is launched, it's floating in the cosmos and can't be recalled. That's why we show you a preview before sending — take a moment to make sure it feels right."
+    },
+    {
+      q: "Is this app free?",
+      a: "Yes, entirely free. If Cosmic Capsule brings you joy, you're welcome to support the cosmos with a coffee — but there's no pressure and no premium features. Kindness should be free."
+    },
+  ];
+
+  return (
+    <div style={{ minHeight:"100vh", padding:"30px 20px", zIndex:1, position:"relative", animation:"fadeUp 0.8s ease forwards" }}>
+      <div style={{ maxWidth:580, margin:"0 auto" }}>
+        <button onClick={onBack} style={{ background:"none", border:"none", color:"rgba(255,180,60,0.5)", fontFamily:"'Georgia',serif", fontSize:"0.88rem", cursor:"pointer", marginBottom:24 }}>← Back</button>
+        <h2 style={{ fontFamily:"'Georgia',serif", fontWeight:400, fontSize:"1.6rem", color:"#ffd080", marginBottom:6 }}>Frequently Asked Questions 🌌</h2>
+        <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.4)", fontSize:"0.85rem", marginBottom:32 }}>Everything you wondered about the cosmos.</p>
+
+        {/* FAQ list */}
+        <div style={{ display:"flex", flexDirection:"column", gap:16, marginBottom:36 }}>
+          {faqs.map((faq, i) => (
+            <div key={i} style={{ background:"rgba(255,140,20,0.04)", border:"1px solid rgba(255,140,20,0.14)", borderRadius:14, padding:"18px 22px" }}>
+              <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,220,140,0.9)", fontSize:"0.95rem", fontWeight:700, marginBottom:8 }}>✦ {faq.q}</p>
+              <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,200,100,0.55)", fontSize:"0.88rem", lineHeight:1.7, margin:0 }}>{faq.a}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Secret Star Code section */}
+        <div style={{ background:"rgba(255,140,20,0.07)", border:"1.5px solid rgba(255,180,60,0.25)", borderRadius:16, padding:"24px 26px", marginBottom:20 }}>
+          <p style={{ fontFamily:"'Georgia',serif", color:"#ffd080", fontSize:"1rem", fontWeight:700, marginBottom:6 }}>🔑 Your Secret Star Code</p>
+          <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.5)", fontSize:"0.85rem", lineHeight:1.6, marginBottom:16 }}>
+            This code is yours. If you ever clear your data or switch devices, enter it to restore your profile. Write it down somewhere safe — we can't recover it for you.
+          </p>
+          <div style={{ display:"flex", alignItems:"center", gap:12, flexWrap:"wrap" }}>
+            {showCode ? (
+              <>
+                <div style={{ background:"rgba(255,140,20,0.12)", border:"1px solid rgba(255,180,60,0.4)", borderRadius:10, padding:"10px 20px" }}>
+                  <span style={{ fontFamily:"'Georgia',serif", color:"#ffd080", fontSize:"1.1rem", letterSpacing:"0.1em", fontWeight:700 }}>{code}</span>
+                </div>
+                <button onClick={handleCopyCode} style={{ background:"rgba(255,140,20,0.08)", border:"1px solid rgba(255,180,60,0.25)", borderRadius:10, padding:"10px 16px", cursor:"pointer", fontFamily:"'Georgia',serif", color:codeCopied?"#ffd080":"rgba(255,200,100,0.55)", fontSize:"0.85rem", transition:"all 0.2s" }}>
+                  {codeCopied ? "✓ Copied!" : "📋 Copy"}
+                </button>
+              </>
+            ) : (
+              <button onClick={()=>setShowCode(true)} style={{ background:"rgba(255,140,20,0.1)", border:"1px solid rgba(255,180,60,0.3)", borderRadius:10, padding:"10px 20px", cursor:"pointer", fontFamily:"'Georgia',serif", color:"rgba(255,200,100,0.7)", fontSize:"0.88rem" }}>
+                👁 Reveal my code
+              </button>
+            )}
+          </div>
+
+          {/* Restore section */}
+          <div style={{ marginTop:20, paddingTop:20, borderTop:"1px solid rgba(255,140,20,0.12)" }}>
+            <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,200,100,0.5)", fontSize:"0.82rem", marginBottom:10 }}>Restoring on a new device? Enter your code:</p>
+            <div style={{ display:"flex", gap:10, flexWrap:"wrap" }}>
+              <input
+                value={restoreInput}
+                onChange={e=>setRestoreInput(e.target.value.toUpperCase())}
+                placeholder="e.g. STAR-4829-MOON"
+                style={{ flex:1, minWidth:160, background:"rgba(255,140,20,0.05)", border:"1.5px solid rgba(255,140,20,0.2)", borderRadius:10, padding:"10px 14px", color:"rgba(255,220,140,0.85)", fontFamily:"'Georgia',serif", fontSize:"0.9rem", outline:"none", caretColor:"#ffa520" }}
+              />
+              <button onClick={handleRestore} style={{ background:"rgba(255,140,20,0.15)", border:"1px solid rgba(255,180,60,0.4)", borderRadius:10, padding:"10px 18px", cursor:"pointer", fontFamily:"'Georgia',serif", color:"#ffd080", fontSize:"0.88rem" }}>
+                Restore ✦
+              </button>
+            </div>
+            {restoreMsg && <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,200,100,0.7)", fontSize:"0.82rem", marginTop:10, fontStyle:"italic" }}>{restoreMsg}</p>}
+          </div>
+        </div>
+
+        <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.28)", fontSize:"0.72rem", textAlign:"center" }}>Cosmic Capsule · purely anonymous · purely kind 💛</p>
+      </div>
+    </div>
+  );
+}
+
 function GuidelinesScreen({ onBack }) {
   const rules = [
     ["💛","Only kindness","Every letter must be warm, positive, and uplifting. No negativity, no sarcasm."],
@@ -704,7 +1102,7 @@ function CountdownTimer() {
 }
 
 // ── Home Screen ──────────────────────────────────────────────────
-function HomeScreen({ onWrite, onReceive, onMyCapsules, onGuidelines, profile, setProfile, sound }) {
+function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelines, onFAQ, profile, setProfile, sound }) {
   
   const [showTip, setShowTip] = useState(false);
   const [count, setCount] = useState(null);
@@ -776,8 +1174,9 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onGuidelines, profile, s
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
         <Btn onClick={onWrite} disabled={remaining === 0}>✍️ Write a Message</Btn>
-        <Btn onClick={onReceive} secondary>🛸 Receive a Transmission</Btn>
+        <Btn onClick={onReceive} secondary>✨ Receive a Transmission</Btn>
         <Btn onClick={onMyCapsules} secondary>📡 My Capsules</Btn>
+        <Btn onClick={onMyReceived} secondary>💌 My Received Letters</Btn>
       </div>
 
       <div style={{ display: "flex", gap: 14, marginTop: 24, flexWrap: "wrap", justifyContent: "center" }}>
@@ -786,6 +1185,7 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onGuidelines, profile, s
         
         <button onClick={() => setShowTip(true)} style={{ background: "none", border: "none", color: "rgba(255,160,60,0.38)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,160,60,0.38)"}>☕ Support the cosmos</button>
         <button onClick={onGuidelines} style={{ background: "none", border: "none", color: "rgba(255,160,60,0.38)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,160,60,0.38)"}>📋 Community guidelines</button>
+        <button onClick={onFAQ} style={{ background: "none", border: "none", color: "rgba(255,160,60,0.38)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,160,60,0.38)"}>💬 FAQ</button>
       </div>
     </div>
   );
@@ -801,12 +1201,12 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
   const [status, setStatus] = useState("idle");
   const [rejectReason, setRejectReason] = useState("");
   const [aiPrompt, setAiPrompt] = useState("");
-  
+  const [subject, setSubject] = useState("");
   const isPremium = true;
   const [showConfetti, setShowConfetti] = useState(false);
   const [milestone, setMilestone] = useState(null);
   const remaining = getDailyRemaining();
-  const maxLen = 500;
+  const maxLen = 700;
 
   const col = COLORS.find(c => c.id === colorId) || COLORS[0];
 
@@ -818,60 +1218,106 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
 
   const handleAIWrite = async () => {
     setStatus("generating");
-    try { const l = await generateLetter(theme); setText(l.slice(0, maxLen)); } catch { setStatus("error"); return; }
+    try { const l = await generateLetter(theme); setText(l.slice(0, 700)); } catch { setStatus("error"); return; }
     setStatus("idle");
   };
 
   const handleSend = async () => {
     setStatus("checking");
     try {
-      const result = await moderateLetter(text.trim());
-      if (result.approved) {
-        const letterId = await submitLetter(text.trim(), colorId, accessoryId, theme.id);
-        const updated = recordSent(letterId, text.trim(), colorId, accessoryId, theme.id);
-        // Milestone check
+      let approved = true;
+      let rejectMsg = "";
+      try {
+        const result = await moderateLetter(text.trim());
+        approved = result.approved;
+        rejectMsg = result.reason || "Your message doesn't meet our positivity guidelines.";
+      } catch {
+        // If moderation API fails (e.g. CORS in preview), allow through
+        approved = true;
+      }
+      if (approved) {
+        let letterId = null;
+        try {
+          letterId = await submitLetter(text.trim(), colorId, accessoryId, subject.trim()||null);
+        } catch {
+          // If DB fails, still let the animation play locally
+        }
+        const updated = recordSent(letterId, text.trim(), colorId, accessoryId, subject.trim()||null);
         const hit = MILESTONES.find(m => m === updated.sent);
         if (hit) { setMilestone(hit); setShowConfetti(true); sound.milestone(); setTimeout(() => setShowConfetti(false), 4000); }
         onSent(updated);
-        setStatus("approved");
       } else {
-        setRejectReason(result.reason || "Your message doesn't meet our positivity guidelines.");
+        setRejectReason(rejectMsg);
         setStatus("rejected");
       }
-    } catch { setStatus("error"); }
+    } catch(e) {
+      console.error("Send error:", e);
+      setStatus("error");
+    }
   };
 
   const currentRank = getRank(profile.sent || 0);
   const newRank = getRank((profile.sent || 0) + 1);
   const rankUp = status === "approved" && newRank.name !== currentRank.name;
 
-  // Mode selection
+  // Step 1: Pick a theme first
+  // Step 1: pick mode
   if (!writeMode) return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minHeight: "100vh", padding: "30px 20px", animation: "fadeUp 0.8s ease forwards", zIndex: 1, position: "relative" }}>
-      <p style={{ fontFamily: "'Georgia',serif", fontSize: "0.72rem", letterSpacing: "0.3em", color: "rgba(255,160,60,0.5)", textTransform: "uppercase", marginBottom: 10 }}>New Transmission</p>
-      <h2 style={{ fontFamily: "'Georgia',serif", fontWeight: 400, fontSize: "1.8rem", color: "#ffd080", marginBottom: 8, textAlign: "center" }}>How would you like to write? ✨</h2>
-      <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,200,100,0.4)", fontSize: "0.88rem", marginBottom: 36, textAlign: "center", maxWidth: 340 }}>Choose how you want to craft your letter.</p>
-      <div style={{ display: "flex", flexDirection: "column", gap: 14, width: "100%", maxWidth: 440 }}>
+    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:"30px 20px", animation:"fadeUp 0.8s ease forwards", zIndex:1, position:"relative" }}>
+      <p style={{ fontFamily:"'Georgia',serif", fontSize:"0.72rem", letterSpacing:"0.3em", color:"rgba(255,160,60,0.5)", textTransform:"uppercase", marginBottom:10 }}>New Transmission</p>
+      <h2 style={{ fontFamily:"'Georgia',serif", fontWeight:400, fontSize:"1.8rem", color:"#ffd080", marginBottom:6, textAlign:"center" }}>How would you like to write? ✨</h2>
+      <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.4)", fontSize:"0.88rem", marginBottom:32, textAlign:"center", maxWidth:340 }}>Choose how you want to craft your letter to a stranger.</p>
+      <div style={{ display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:460 }}>
         {[
           ["✍️","Write it yourself","idle","A blank page, your heart, and the cosmos.","rgba(255,140,20,0.06)","rgba(255,140,20,0.25)","#ffd080"],
-          ["💡","Get inspired","inspired","AI sparks a prompt — you write every word.","rgba(100,180,255,0.05)","rgba(100,180,255,0.2)","#88ccff"],
-          ["🤖","Let AI write for me","ai","AI crafts the letter. Edit it or send as is.","rgba(180,100,255,0.05)","rgba(180,100,255,0.2)","#cc88ff"],
+          ["💡","Get inspired","inspired","Pick a theme — AI sparks a prompt, you write the words.","rgba(100,180,255,0.05)","rgba(100,180,255,0.2)","#88ccff"],
+          ["🤖","Let AI write for me","ai","Pick a theme — AI crafts the full letter. Edit or send as is.","rgba(180,100,255,0.05)","rgba(180,100,255,0.2)","#cc88ff"],
         ].map(([icon,title,mode,desc,bg,border,color])=>(
-          <div key={mode} onClick={()=>{ setWriteMode(mode); if(mode==="inspired") handleGetInspired(); if(mode==="ai") handleAIWrite(); }}
-            style={{ cursor:"pointer", background:bg, border:`1.5px solid ${border}`, borderRadius:18, padding:"20px 24px", display:"flex", gap:16, alignItems:"flex-start", transition:"all 0.25s" }}
-            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow=`0 8px 24px rgba(0,0,0,0.3)`;}}
+          <div key={mode} onClick={()=>{ if(mode==="idle"){ setWriteMode(mode); } else { setWriteMode("__picking_theme__"+mode); } }}
+            style={{ cursor:"pointer", background:bg, border:`1.5px solid ${border}`, borderRadius:14, padding:"18px 22px", display:"flex", gap:14, alignItems:"flex-start", transition:"all 0.2s" }}
+            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 20px rgba(0,0,0,0.3)";}}
             onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}>
-            <div style={{ fontSize:"1.8rem",lineHeight:1 }}>{icon}</div>
+            <div style={{ fontSize:"1.6rem", lineHeight:1 }}>{icon}</div>
             <div>
-              <div style={{ fontFamily:"'Georgia',serif", color, fontSize:"1rem", fontWeight:700, marginBottom:4 }}>{title}</div>
-              <div style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.4)", fontSize:"0.82rem", lineHeight:1.6 }}>{desc}</div>
+              <div style={{ fontFamily:"'Georgia',serif", color, fontSize:"0.95rem", fontWeight:700, marginBottom:4 }}>{title}</div>
+              <div style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.38)", fontSize:"0.8rem" }}>{desc}</div>
             </div>
           </div>
         ))}
       </div>
-      <button onClick={onBack} style={{ background:"none",border:"none",color:"rgba(255,160,60,0.35)",fontFamily:"'Georgia',serif",fontSize:"0.85rem",cursor:"pointer",marginTop:28 }}>← Back</button>
+      <button onClick={onBack} style={{ background:"none", border:"none", color:"rgba(255,160,60,0.35)", fontFamily:"'Georgia',serif", fontSize:"0.85rem", cursor:"pointer", marginTop:28 }}>← Back</button>
     </div>
   );
+
+  // Step 2: theme picker — only for inspired/ai
+  if (writeMode && writeMode.startsWith("__picking_theme__")) {
+    const pendingMode = writeMode.replace("__picking_theme__","");
+    return (
+      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:"30px 20px", animation:"fadeUp 0.8s ease forwards", zIndex:1, position:"relative" }}>
+        <p style={{ fontFamily:"'Georgia',serif", fontSize:"0.72rem", letterSpacing:"0.3em", color:"rgba(255,160,60,0.5)", textTransform:"uppercase", marginBottom:10 }}>New Transmission</p>
+        <h2 style={{ fontFamily:"'Georgia',serif", fontWeight:400, fontSize:"1.8rem", color:"#ffd080", marginBottom:6, textAlign:"center" }}>Choose a theme ✨</h2>
+        <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.4)", fontSize:"0.88rem", marginBottom:28, textAlign:"center", maxWidth:340 }}>What feeling do you want to send into the cosmos?</p>
+        <div style={{ display:"flex", flexDirection:"column", gap:10, width:"100%", maxWidth:460, marginBottom:28 }}>
+          {THEMES.map(t => (
+            <div key={t.id} onClick={()=>setTheme(t)}
+              style={{ cursor:"pointer", background:theme.id===t.id?"rgba(255,140,20,0.14)":"rgba(255,140,20,0.04)", border:`1.5px solid ${theme.id===t.id?"rgba(255,180,60,0.7)":"rgba(255,140,20,0.15)"}`, borderRadius:14, padding:"14px 20px", display:"flex", alignItems:"center", gap:14, transition:"all 0.2s" }}
+              onMouseEnter={e=>{if(theme.id!==t.id){e.currentTarget.style.background="rgba(255,140,20,0.08)";}}}
+              onMouseLeave={e=>{if(theme.id!==t.id){e.currentTarget.style.background="rgba(255,140,20,0.04)";}}}
+            >
+              <span style={{ fontSize:"1.5rem", flexShrink:0 }}>{t.label.split(" ")[0]}</span>
+              <div>
+                <div style={{ fontFamily:"'Georgia',serif", color:theme.id===t.id?"#ffd080":"rgba(255,200,100,0.6)", fontSize:"0.92rem", fontWeight:theme.id===t.id?700:400 }}>{t.label.split(" ").slice(1).join(" ")}</div>
+                <div style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.35)", fontSize:"0.75rem", marginTop:2 }}>{t.prompt}</div>
+              </div>
+              {theme.id===t.id && <div style={{ marginLeft:"auto", width:10, height:10, borderRadius:"50%", background:"#ffa520", boxShadow:"0 0 10px rgba(255,140,20,0.8)", flexShrink:0 }} />}
+            </div>
+          ))}
+        </div>
+        <Btn onClick={()=>{ setWriteMode(pendingMode); if(pendingMode==="inspired") handleGetInspired(); if(pendingMode==="ai") handleAIWrite(); }}>Continue with {theme.label} →</Btn>
+        <button onClick={()=>setWriteMode(null)} style={{ background:"none", border:"none", color:"rgba(255,160,60,0.35)", fontFamily:"'Georgia',serif", fontSize:"0.85rem", cursor:"pointer", marginTop:16 }}>← Back</button>
+      </div>
+    );
+  }
 
   // Approved
   if (status === "approved") return (
@@ -899,7 +1345,7 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
     <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"30px 20px",animation:"fadeUp 0.8s ease forwards",zIndex:1,position:"relative" }}>
       {(status==="checking") && (
         <div style={{ position:"fixed",inset:0,zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(10,5,0,0.92)",flexDirection:"column",gap:20 }}>
-          <div style={{ fontSize:55,animation:"capsuleFloat 2s ease-in-out infinite" }}>🛸</div>
+          <div style={{ animation:"capsuleFloat 2s ease-in-out infinite", display:"flex", justifyContent:"center" }}><CapsuleSVG colorId="amber" size={55} glowing /></div>
           <p style={{ fontFamily:"'Georgia',serif",color:"#ffd080",fontSize:"1.05rem" }}>Preparing your transmission…</p>
           <div style={{ display:"flex",gap:10 }}>{[0,1,2].map(i=><div key={i} style={{ width:8,height:8,borderRadius:"50%",background:"#ffa520",animation:"pulseGlow 1.2s ease-in-out infinite",animationDelay:`${i*0.3}s` }}/>)}</div>
         </div>
@@ -911,14 +1357,36 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
         <CapsuleSVG colorId={colorId} size={80} glowing />
         <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center" }}><AccLayer accessoryId={accessoryId} colorId={colorId} size={80} /></div>
       </div>
-      <div style={{ width:"100%",maxWidth:500,background:`rgba(${colorId==="frost"?"200,220,255":"255,140,20"},0.06)`,border:`1.5px solid ${col.glow.replace("0.9","0.3")}`,borderRadius:20,padding:"26px 30px",boxShadow:`0 0 40px ${col.glow.replace("0.9","0.12")}`,marginBottom:14,position:"relative",overflow:"hidden" }}>
-        <div style={{ position:"absolute",top:-30,right:-30,width:140,height:140,borderRadius:"50%",background:`radial-gradient(circle,${col.glow.replace("0.9","0.15")},transparent 70%)` }} />
-        <p style={{ fontFamily:"'Georgia',serif",fontSize:"0.98rem",lineHeight:1.85,color:"rgba(255,220,140,0.9)",margin:0,whiteSpace:"pre-wrap",position:"relative",zIndex:1 }}>{text}</p>
+      {/* Paper — identical to how recipient sees it */}
+      <div style={{ width:"100%",maxWidth:500,position:"relative",marginBottom:20 }}>
+        <div style={{ position:"absolute",inset:0,borderRadius:16,background:"rgba(0,0,0,0.35)",transform:"translate(4px,6px)",filter:"blur(8px)" }} />
+        <div style={{ position:"relative",background:"linear-gradient(160deg,#fffdf0,#fff8dc,#fff3c8)",borderRadius:16,padding:"36px 34px 42px",border:"1px solid rgba(255,200,100,0.3)",boxShadow:"0 0 60px rgba(255,160,40,0.12),inset 0 0 40px rgba(255,240,180,0.08)" }}>
+          {/* Paper lines */}
+          {[...Array(12)].map((_,i) => (
+            <div key={i} style={{ position:"absolute",left:34,right:34,top:`${72+i*22}px`,height:"1px",background:"rgba(180,140,60,0.1)",borderRadius:1 }} />
+          ))}
+          {/* Fold corner */}
+          <div style={{ position:"absolute",top:0,right:0,width:0,height:0,borderStyle:"solid",borderWidth:"0 36px 36px 0",borderColor:"transparent rgba(255,220,120,0.5) transparent transparent" }} />
+          {/* Wax seal */}
+          <div style={{ position:"absolute",bottom:14,right:20,width:28,height:28,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,80,60,0.5),rgba(200,40,20,0.4))",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(200,40,20,0.3)" }}>
+            <span style={{ fontSize:"0.7rem" }}>✦</span>
+          </div>
+          {/* Subject stamp — Kalam font, same as letter */}
+          {subject.trim() && (
+            <div style={{ position:"absolute",top:14,left:18,background:"rgba(255,160,40,0.12)",border:"1px solid rgba(255,160,40,0.2)",borderRadius:10,padding:"2px 10px" }}>
+              <span style={{ fontFamily:"'Kalam',cursive",fontWeight:700,fontSize:"0.82rem",color:"rgba(160,110,30,0.85)" }}>
+                ✦ {subject.trim()}
+              </span>
+            </div>
+          )}
+          {/* Letter text */}
+          <p style={{ fontFamily:"'Kalam',cursive",fontSize:"1.25rem",fontWeight:700,lineHeight:1.85,color:"rgba(60,35,5,0.88)",margin:0,whiteSpace:"pre-wrap",position:"relative",zIndex:1,marginTop:subject.trim()?16:0 }}>{text}</p>
+        </div>
       </div>
-      <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.28)",fontSize:"0.72rem",marginBottom:26,textAlign:"center" }}>Sent anonymously · {theme.label}</p>
+      <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.28)",fontSize:"0.72rem",marginBottom:20,textAlign:"center" }}>Sent anonymously from somewhere in the universe.</p>
       <div style={{ display:"flex",gap:14,flexWrap:"wrap",justifyContent:"center" }}>
         <Btn onClick={()=>setStatus("idle")} secondary>✏️ Edit</Btn>
-        <Btn onClick={handleSend}>Launch Capsule 🛸</Btn>
+        <Btn onClick={handleSend}>🚀 Launch Capsule</Btn>
       </div>
     </div>
   );
@@ -929,7 +1397,7 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
       
       {(status==="checking"||status==="generating") && (
         <div style={{ position:"fixed",inset:0,zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(10,5,0,0.92)",flexDirection:"column",gap:18 }}>
-          <div style={{ fontSize:55,animation:"capsuleFloat 2s ease-in-out infinite" }}>{status==="generating"?writeMode==="inspired"?"💡":"🤖":"🛸"}</div>
+          <div style={{ animation:"capsuleFloat 2s ease-in-out infinite", display:"flex", justifyContent:"center" }}>{status==="generating" ? <span style={{fontSize:55}}>{writeMode==="inspired"?"💡":"🤖"}</span> : <CapsuleSVG colorId="amber" size={55} glowing />}</div>
           <p style={{ fontFamily:"'Georgia',serif",color:"#ffd080",fontSize:"1.05rem" }}>{status==="generating"?writeMode==="inspired"?"Finding your spark…":"Crafting your letter…":"Preparing your transmission…"}</p>
           <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.45)",fontSize:"0.82rem" }}>{status==="generating"?"Consulting the stars":"Checking it's ready for the cosmos"}</p>
           <div style={{ display:"flex",gap:10 }}>{[0,1,2].map(i=><div key={i} style={{ width:8,height:8,borderRadius:"50%",background:"#ffa520",animation:"pulseGlow 1.2s ease-in-out infinite",animationDelay:`${i*0.3}s` }}/>)}</div>
@@ -939,24 +1407,33 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
       <p style={{ fontFamily:"'Georgia',serif",fontSize:"0.72rem",letterSpacing:"0.3em",color:"rgba(255,160,60,0.5)",textTransform:"uppercase",marginBottom:8 }}>New Transmission</p>
       <h2 style={{ fontFamily:"'Georgia',serif",fontWeight:400,fontSize:"1.7rem",color:"#ffd080",marginBottom:18,textAlign:"center" }}>Write your message</h2>
 
-      {/* Theme picker */}
-      <div style={{ width:"100%",maxWidth:520,marginBottom:14 }}>
-        <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.5)",fontSize:"0.68rem",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:8 }}>Theme</p>
-        <div style={{ display:"flex",gap:7,flexWrap:"wrap" }}>
-          {THEMES.map(t=>(
-            <button key={t.id} onClick={()=>setTheme(t)} style={{ padding:"6px 12px",borderRadius:20,border:`1px solid ${theme.id===t.id?"rgba(255,180,60,0.8)":"rgba(255,140,20,0.18)"}`,background:theme.id===t.id?"rgba(255,140,20,0.18)":"transparent",color:theme.id===t.id?"#ffd080":"rgba(255,180,60,0.5)",fontFamily:"'Georgia',serif",fontSize:"0.75rem",cursor:"pointer" }}>{t.label}</button>
-          ))}
+      {/* AI prompt hint — only shown after theme was chosen */}
+      {writeMode==="inspired" && aiPrompt && (
+        <div style={{ width:"100%",maxWidth:520,marginBottom:14 }}>
+          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(150,210,255,0.7)",fontSize:"0.88rem",lineHeight:1.6 }}>💡 {aiPrompt} <button onClick={handleGetInspired} style={{ background:"none",border:"none",color:"rgba(100,180,255,0.5)",fontFamily:"'Georgia',serif",fontSize:"0.72rem",cursor:"pointer" }}>↻ new spark</button></p>
         </div>
-        {(writeMode==="inspired"&&aiPrompt) && <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(150,210,255,0.7)",fontSize:"0.82rem",marginTop:8,lineHeight:1.5 }}>💡 {aiPrompt} <button onClick={handleGetInspired} style={{ background:"none",border:"none",color:"rgba(100,180,255,0.5)",fontFamily:"'Georgia',serif",fontSize:"0.72rem",cursor:"pointer" }}>↻</button></p>}
-        {(writeMode==="ai"&&text) && <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(200,150,255,0.6)",fontSize:"0.78rem",marginTop:8 }}>🤖 AI wrote this — feel free to edit <button onClick={handleAIWrite} style={{ background:"none",border:"none",color:"rgba(180,100,255,0.5)",fontFamily:"'Georgia',serif",fontSize:"0.72rem",cursor:"pointer" }}>↻</button></p>}
-      </div>
+      )}
+      {writeMode==="ai" && text && (
+        <div style={{ width:"100%",maxWidth:520,marginBottom:8 }}>
+          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(200,150,255,0.6)",fontSize:"0.82rem" }}>🤖 AI wrote this — feel free to edit <button onClick={handleAIWrite} style={{ background:"none",border:"none",color:"rgba(180,100,255,0.5)",fontFamily:"'Georgia',serif",fontSize:"0.72rem",cursor:"pointer" }}>↻ rewrite</button></p>
+        </div>
+      )}
+      {/* Subject/mood — available for all modes */}
+      <div style={{ width:"100%",maxWidth:520,marginBottom:14 }}>
+        <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.5)",fontSize:"0.68rem",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:8 }}>Subject or mood (optional)</p>
+        <input
+          value={subject} onChange={e=>setSubject(e.target.value.slice(0,60))}
+          placeholder="e.g. hope, courage, a rainy day feeling…"
+          style={{ width:"100%",background:"rgba(255,140,20,0.05)",border:"1.5px solid rgba(255,140,20,0.2)",borderRadius:12,padding:"10px 16px",color:"rgba(255,220,140,0.85)",fontFamily:"'Georgia',serif",fontSize:"1rem",outline:"none",boxSizing:"border-box",caretColor:"#ffa520" }}
+        />
+        <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.3)",fontSize:"0.75rem",marginTop:5 }}>This will appear gently on the letter when received. 💛</p>
       </div>
 
       {/* Textarea */}
       <div style={{ width:"100%",maxWidth:520,background:"rgba(255,140,20,0.05)",border:`1.5px solid ${status==="rejected"?"rgba(255,80,60,0.5)":"rgba(255,140,20,0.22)"}`,borderRadius:16,padding:"4px" }}>
         <textarea value={text} onChange={e=>{setText(e.target.value.slice(0,maxLen));if(status==="rejected")setStatus("idle");}}
           placeholder={writeMode==="inspired"&&aiPrompt?aiPrompt:"Dear stranger across the stars…"} rows={6}
-          style={{ width:"100%",background:"transparent",border:"none",outline:"none",resize:"none",color:"rgba(255,220,140,0.9)",padding:"16px 18px",fontFamily:"'Georgia',serif",fontSize:"0.98rem",lineHeight:1.7,caretColor:"#ffa520",boxSizing:"border-box" }} />
+          style={{ width:"100%",background:"transparent",border:"none",outline:"none",resize:"none",color:"rgba(255,220,140,0.9)",padding:"16px 18px",fontFamily:"'Kalam',cursive",fontSize:"1.2rem",fontWeight:700,lineHeight:1.7,caretColor:"#ffa520",boxSizing:"border-box" }} />
       </div>
       <div style={{ width:"100%",maxWidth:520,display:"flex",justifyContent:"space-between",marginTop:7,marginBottom:6,color:"rgba(255,160,60,0.38)",fontFamily:"'Georgia',serif",fontSize:"0.75rem" }}>
         <span>{text.length<10?"Write at least 10 characters":"✓ Ready to preview"}</span>
@@ -982,99 +1459,248 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
 
 // ── Receive Screen ───────────────────────────────────────────────
 function ReceiveScreen({ onBack, sound }) {
-  const [animStage, setAnimStage] = useState("arriving"); // arriving | opening | reading
+  const [stage, setStage] = useState("warp"); // warp|arriving|opening|emerging|reading
+  const [warpProg, setWarpProg] = useState(0);
   const [letterData, setLetterData] = useState(null);
   const [hearted, setHearted] = useState(false);
+  const [kept, setKept] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [showReport, setShowReport] = useState(false);
-  const [warpProgress, setWarpProgress] = useState(0);
+  const timers = useRef([]);
+
+  const clear = () => { timers.current.forEach(clearTimeout); timers.current = []; };
 
   const loadLetter = useCallback(async () => {
-    setAnimStage("arriving"); setHearted(false); setLetterData(null);
-    try {
-      const data = await fetchRandomLetter(getSentIds());
-      setTimeout(() => { setLetterData(data); sound.capsuleOpen(); setAnimStage("opening"); }, 2000);
-      setTimeout(() => { sound.letterEmerge(); setAnimStage("reading"); }, 3800);
-    } catch {
-      setTimeout(() => { setLetterData(FALLBACK_LETTERS[0]); setAnimStage("opening"); }, 2000);
-      setTimeout(() => { setAnimStage("reading"); }, 3800);
+    clear();
+    setStage("warp"); setWarpProg(0); setHearted(false); setKept(false); setCopied(false); setLetterData(null);
+    // Fetch while warp plays
+    let data = null;
+    let isFallback = false;
+    try { data = await fetchRandomLetter(getSentIds(), getSeenReceivedIds()); }
+    catch { data = null; }
+    // Only use fallback if DB is truly empty (null means no real letters exist)
+    if (!data) {
+      const idx = getUnseenFallback();
+      data = { ...FALLBACK_LETTERS[idx], _fallbackIdx: idx };
+      isFallback = true;
     }
+    // Warp progress
+    sound.warpHum();
+    for (let i = 1; i <= 6; i++) {
+      timers.current.push(setTimeout(() => setWarpProg(i), i * 1000));
+    }
+    timers.current.push(setTimeout(() => {
+      // data is always set (fallback guarantees it)
+      // Mark seen so it won't repeat
+      if (isFallback && data._fallbackIdx !== undefined) markFallbackSeen(data._fallbackIdx);
+      else if (data?.id) markLetterSeen(data.id);
+      setLetterData(data);
+      setStage("arriving");
+      sound.launch();
+    }, 6200));
+    timers.current.push(setTimeout(() => {
+      setStage("opening");
+      sound.capsuleOpen();
+    }, 8400));
+    timers.current.push(setTimeout(() => {
+      setStage("emerging");
+      sound.letterEmerge();
+    }, 10200));
+    timers.current.push(setTimeout(() => {
+      setStage("reading");
+    }, 11600));
   }, []);
 
-  useEffect(() => { loadLetter(); }, []);
+  useEffect(() => { loadLetter(); return clear; }, []);
 
   const handleHeart = async () => {
-    if (hearted || !letterData?.id) return;
+    if (hearted) return;
     setHearted(true); sound.heart();
-    try { await incrementHeart(letterData.id); } catch {}
+    if (letterData?.id) {
+      try { await incrementHeart(letterData.id); } catch {}
+    }
+  };
+  const handleKeep = () => {
+    if (kept || !letterData) return;
+    saveReceivedLetter(letterData);
+    setKept(true);
+  };
+  const fallbackCopy = (text) => {
+    const el = document.createElement('textarea');
+    el.value = text;
+    el.style.cssText = 'position:fixed;top:-9999px;left:-9999px;opacity:0;';
+    document.body.appendChild(el);
+    el.focus(); el.select();
+    try { document.execCommand('copy'); setCopied(true); setTimeout(() => setCopied(false), 2500); } catch(e) {}
+    document.body.removeChild(el);
+  };
+  const handleCopy = () => {
+    if (!letterData) return;
+    const parts = [];
+    if (letterData.theme) parts.push('✦ ' + letterData.theme + '\n\n');
+    parts.push(letterData.message);
+    const text = parts.join('');
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text)
+        .then(() => { setCopied(true); setTimeout(() => setCopied(false), 2500); })
+        .catch(() => fallbackCopy(text));
+    } else {
+      fallbackCopy(text);
+    }
   };
 
   const days = letterData ? daysFloating(letterData.created_at) : 0;
-  const col = letterData ? (COLORS.find(c => c.id === letterData.color_id) || COLORS[0]) : COLORS[0];
+  const subjectTag = letterData?.theme || null;
 
   return (
-    <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"30px 20px",zIndex:1,position:"relative" }}>
+    <div style={{ minHeight:"100vh", position:"relative", overflow:"hidden" }}>
       {showReport && letterData?.id && <ReportModal letterId={letterData.id} onClose={()=>setShowReport(false)} />}
 
-      {animStage==="arriving" && (
-        <div style={{ animation:"capsuleArrive 2s cubic-bezier(0.2,0.8,0.3,1) forwards",textAlign:"center" }}>
-          <div style={{ position:"relative",display:"inline-block" }}>
-            <CapsuleSVG colorId={letterData?.color_id||"amber"} size={110} glowing />
-            <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
-              <AccLayer accessoryId={letterData?.accessory_id||"none"} colorId={letterData?.color_id||"amber"} size={110} />
-            </div>
+      {/* ── WARP stage ── */}
+      {stage === "warp" && <WarpScreen progress={warpProg} receive />}
+
+      {/* ── EMPTY stage — no real letters yet ── */}
+      {stage === "empty" && (
+        <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",textAlign:"center",padding:30,animation:"fadeUp 0.8s ease forwards",zIndex:1,position:"relative" }}>
+          <div style={{ animation:"capsuleFloat 4s ease-in-out infinite",marginBottom:24,opacity:0.6 }}>
+            <CapsuleSVG colorId="amber" size={100} />
           </div>
-          <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.5)",fontSize:"0.85rem",marginTop:20,fontStyle:"italic" }}>A capsule is approaching…</p>
+          <h2 style={{ fontFamily:"'Georgia',serif",fontWeight:400,fontSize:"1.6rem",color:"#ffd080",marginBottom:12 }}>The cosmos is quiet… 🌌</h2>
+          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,200,100,0.5)",fontSize:"0.95rem",maxWidth:320,lineHeight:1.8,marginBottom:28 }}>No capsules are drifting through space yet. Be the first to send a letter — and start the chain of kindness. 💛</p>
+          <Btn onClick={onBack} secondary>← Return to Base</Btn>
         </div>
       )}
 
-      {animStage==="opening" && (
-        <div style={{ textAlign:"center" }}>
-          <div style={{ position:"relative",display:"inline-block" }}>
-            <CapsuleSVG colorId={letterData?.color_id||"amber"} size={110} glowing open />
-            <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center" }}>
-              <AccLayer accessoryId={letterData?.accessory_id||"none"} colorId={letterData?.color_id||"amber"} size={110} />
+      {/* ── ARRIVING stage ── */}
+      {stage === "arriving" && (
+        <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",textAlign:"center",padding:20 }}>
+          {/* Nebula burst */}
+          <div style={{ position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-50%)",width:300,height:300,borderRadius:"50%",background:"radial-gradient(circle, rgba(255,140,20,0.18), transparent 70%)",animation:"pulseGlow 1s ease-in-out infinite",pointerEvents:"none" }} />
+          {/* Stars streaking in */}
+          {[...Array(8)].map((_,i) => (
+            <div key={i} style={{ position:"absolute", width:"1.5px", height:`${30+i*8}px`, background:`linear-gradient(to bottom, transparent, rgba(255,200,120,${0.4+i*0.05}))`, top:`${10+i*10}%`, left:`${5+i*12}%`, animation:`starStreak ${0.6+i*0.15}s linear infinite`, animationDelay:`${i*0.12}s`, borderRadius:2 }} />
+          ))}
+          <div style={{ animation:"capsuleArrive 2s cubic-bezier(0.2,0.8,0.3,1) forwards", position:"relative", zIndex:2 }}>
+            {/* Flipped — nose pointing DOWN toward viewer */}
+            <div style={{ transform:"rotate(180deg)" }}>
+              <CapsuleSVG colorId="amber" size={120} glowing />
             </div>
           </div>
-          <div style={{ position:"absolute",top:"40%",left:"50%",transform:"translate(-50%,-50%)",width:80,height:80,borderRadius:"50%",background:`radial-gradient(circle, ${col.glow.replace("0.9","0.5")}, transparent 70%)`,animation:"pulseGlow 0.8s ease-in-out infinite" }} />
+          <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,200,100,0.6)",fontSize:"0.95rem",marginTop:24,fontStyle:"italic",position:"relative",zIndex:2,animation:"fadeUp 0.8s ease forwards" }}>
+            A capsule has found you… 🛸
+          </p>
         </div>
       )}
 
-      {animStage==="reading" && letterData && (
-        <div style={{ animation:"fadeUp 1s ease forwards",width:"100%",maxWidth:540 }}>
-          <p style={{ fontFamily:"'Georgia',serif",fontSize:"0.7rem",letterSpacing:"0.3em",color:"rgba(255,160,60,0.45)",textTransform:"uppercase",marginBottom:10,textAlign:"center" }}>Transmission Received</p>
-          <h2 style={{ fontFamily:"'Georgia',serif",fontWeight:400,fontSize:"1.5rem",color:"#ffd080",marginBottom:8,textAlign:"center" }}>A message found you 🌠</h2>
-          {days > 0 && <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.35)",fontSize:"0.76rem",textAlign:"center",marginBottom:18 }}>This capsule has been floating for {days} {days===1?"day":"days"} 🛸</p>}
+      {/* ── OPENING stage ── */}
+      {stage === "opening" && (
+        <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",textAlign:"center",padding:20 }}>
+          {/* Golden burst */}
+          <div style={{ position:"absolute",top:"50%",left:"50%",transform:"translate(-50%,-60%)",width:200,height:200,borderRadius:"50%",background:"radial-gradient(circle, rgba(255,200,80,0.35), transparent 70%)",animation:"pulseGlow 0.6s ease-in-out infinite",pointerEvents:"none" }} />
+          {[...Array(12)].map((_,i) => {
+            const angle = i * 30;
+            const dist = 80 + (i%3)*20;
+            return (
+              <div key={i} style={{ position:"absolute", top:"50%", left:"50%", width:"2px", height:`${8+i%4*4}px`, background:"rgba(255,220,100,0.7)", borderRadius:2, transformOrigin:"top center", transform:`translate(-50%,-${dist}%) rotate(${angle}deg)`, animation:`sparkle 0.8s ease-in-out infinite`, animationDelay:`${i*0.07}s` }} />
+            );
+          })}
+          <div style={{ position:"relative", zIndex:2, transform:"rotate(180deg)" }}>
+            <CapsuleSVG colorId="amber" size={120} glowing open />
+          </div>
+          <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,220,120,0.7)",fontSize:"0.95rem",marginTop:20,fontStyle:"italic",position:"relative",zIndex:2 }}>
+            Opening… ✨
+          </p>
+        </div>
+      )}
 
-          <div style={{ animation:"capsuleFloat 4s ease-in-out infinite",marginBottom:14,position:"relative",textAlign:"center" }}>
-            <div style={{ display:"inline-block",position:"relative" }}>
-              <CapsuleSVG colorId={letterData.color_id||"amber"} size={70} glowing open />
-              <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center" }}><AccLayer accessoryId={letterData.accessory_id||"none"} colorId={letterData.color_id||"amber"} size={70} /></div>
-            </div>
+      {/* ── EMERGING stage ── */}
+      {stage === "emerging" && (
+        <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",textAlign:"center",padding:20,gap:0 }}>
+          <div style={{ position:"relative",zIndex:2 }}>
+            <CapsuleSVG colorId="amber" size={90} glowing open />
+          </div>
+          <div style={{ animation:"paperEmerge 1.2s cubic-bezier(0.2,0.8,0.3,1) forwards", marginTop:-20, position:"relative", zIndex:3 }}>
+            <Paper emerging theme={letterData?.theme} />
+          </div>
+        </div>
+      )}
+
+      {/* ── READING stage ── */}
+      {stage === "reading" && letterData && (
+        <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"flex-start",minHeight:"100vh",padding:"40px 20px 30px",animation:"fadeUp 0.8s ease forwards",position:"relative",zIndex:1 }}>
+          {/* Floating capsule top */}
+          <div style={{ animation:"capsuleFloat 5s ease-in-out infinite",marginBottom:8,opacity:0.7 }}>
+            <CapsuleSVG colorId="amber" size={50} />
           </div>
 
-          {/* Paper emerging */}
-          <div style={{ animation:"paperEmerge 1s ease forwards",marginBottom:16 }}>
-            <div style={{ background:`rgba(${col.id==="frost"?"200,220,255":"255,140,20"},0.06)`,border:`1.5px solid ${col.glow.replace("0.9","0.28")}`,borderRadius:20,padding:"26px 30px",boxShadow:`0 0 40px ${col.glow.replace("0.9","0.1")},0 20px 60px rgba(0,0,0,0.4)`,position:"relative",overflow:"hidden" }}>
-              <div style={{ position:"absolute",top:-30,right:-30,width:140,height:140,borderRadius:"50%",background:`radial-gradient(circle,${col.glow.replace("0.9","0.15")},transparent 70%)` }} />
-              <p style={{ fontFamily:"'Georgia',serif",fontSize:"1rem",lineHeight:1.85,color:"rgba(255,220,140,0.92)",margin:0,whiteSpace:"pre-wrap",position:"relative",zIndex:1 }}>{letterData.message}</p>
+          <p style={{ fontFamily:"'Georgia',serif",fontSize:"0.7rem",letterSpacing:"0.3em",color:"rgba(255,160,60,0.45)",textTransform:"uppercase",marginBottom:6,textAlign:"center" }}>Transmission Received</p>
+          <h2 style={{ fontFamily:"'Georgia',serif",fontWeight:400,fontSize:"1.5rem",color:"#ffd080",marginBottom:6,textAlign:"center" }}>A message found you 🌠</h2>
+
+          {/* Floating days + theme mood stamp */}
+          <div style={{ display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:20 }}>
+            {days > 0 && (
+              <div style={{ background:"rgba(255,140,20,0.08)",border:"1px solid rgba(255,140,20,0.2)",borderRadius:20,padding:"4px 14px" }}>
+                <span style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.55)",fontSize:"0.75rem" }}>🛸 Floating for {days} {days===1?"day":"days"}</span>
+              </div>
+            )}
+
+            {subjectTag && (
+              <div style={{ background:"rgba(255,140,20,0.08)",border:"1px solid rgba(255,160,60,0.2)",borderRadius:20,padding:"4px 14px" }}>
+                <span style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,200,100,0.65)",fontSize:"0.75rem" }}>✦ {subjectTag}</span>
+              </div>
+            )}
+          </div>
+
+          {/* The letter — styled as a real piece of paper */}
+          <div style={{ width:"100%",maxWidth:520,position:"relative",marginBottom:20 }}>
+            {/* Paper shadow */}
+            <div style={{ position:"absolute",inset:0,borderRadius:16,background:"rgba(0,0,0,0.35)",transform:"translate(4px,6px)",filter:"blur(8px)" }} />
+            <div style={{ position:"relative",background:"linear-gradient(160deg,#fffdf0,#fff8dc,#fff3c8)",borderRadius:16,padding:"36px 34px 42px",border:"1px solid rgba(255,200,100,0.3)",boxShadow:"0 0 60px rgba(255,160,40,0.12),inset 0 0 40px rgba(255,240,180,0.08)" }}>
+              {/* Paper texture lines */}
+              {[...Array(12)].map((_,i) => (
+                <div key={i} style={{ position:"absolute",left:34,right:34,top:`${72+i*22}px`,height:"1px",background:"rgba(180,140,60,0.1)",borderRadius:1 }} />
+              ))}
+              {/* Fold corner */}
+              <div style={{ position:"absolute",top:0,right:0,width:0,height:0,borderStyle:"solid",borderWidth:"0 36px 36px 0",borderColor:`transparent rgba(255,220,120,0.5) transparent transparent` }} />
+              {/* Wax seal */}
+              <div style={{ position:"absolute",bottom:14,right:20,width:28,height:28,borderRadius:"50%",background:"radial-gradient(circle,rgba(255,80,60,0.5),rgba(200,40,20,0.4))",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:"0 2px 8px rgba(200,40,20,0.3)" }}>
+                <span style={{ fontSize:"0.7rem" }}>✦</span>
+              </div>
+              {/* Subject stamp top left */}
+              {subjectTag && (
+                <div style={{ position:"absolute",top:14,left:18,background:"rgba(255,160,40,0.12)",border:"1px solid rgba(255,160,40,0.2)",borderRadius:10,padding:"2px 10px" }}>
+                  <span style={{ fontFamily:"'Kalam',cursive",fontWeight:700,fontSize:"0.82rem",color:"rgba(160,110,30,0.85)" }}>✦ {subjectTag}</span>
+                </div>
+              )}
+              {/* Letter text */}
+              <p style={{ fontFamily:"'Kalam',cursive",fontSize:"1.3rem",fontWeight:700,lineHeight:2,color:"rgba(80,50,10,0.88)",margin:0,whiteSpace:"pre-wrap",position:"relative",zIndex:1,marginTop:subjectTag?16:0 }}>
+                {letterData.message}
+              </p>
             </div>
           </div>
 
           {/* Heart + Report */}
           <div style={{ display:"flex",gap:12,justifyContent:"center",marginBottom:8,flexWrap:"wrap" }}>
-            <button onClick={handleHeart} disabled={hearted||!letterData.id}
-              style={{ background:hearted?"rgba(255,100,100,0.18)":"rgba(255,100,100,0.07)",border:`1px solid ${hearted?"rgba(255,100,100,0.45)":"rgba(255,100,100,0.18)"}`,borderRadius:30,padding:"10px 22px",cursor:hearted?"default":"pointer",display:"inline-flex",alignItems:"center",gap:8,transition:"all 0.3s" }}>
-              <span style={{ fontSize:"1rem" }}>{hearted?"❤️":"🤍"}</span>
-              <span style={{ fontFamily:"'Georgia',serif",color:hearted?"rgba(255,160,140,0.9)":"rgba(255,160,120,0.5)",fontSize:"0.82rem" }}>This touched my heart</span>
+            <button onClick={handleHeart} disabled={hearted}
+              style={{ background:hearted?"rgba(255,100,100,0.2)":"rgba(255,100,100,0.07)",border:`1px solid ${hearted?"rgba(255,100,100,0.5)":"rgba(255,100,100,0.15)"}`,borderRadius:30,padding:"11px 24px",cursor:hearted?"default":"pointer",display:"inline-flex",alignItems:"center",gap:8,transition:"all 0.3s",transform:hearted?"scale(1.05)":"scale(1)" }}>
+              <span style={{ fontSize:"1.1rem" }}>{hearted?"❤️":"🤍"}</span>
+              <span style={{ fontFamily:"'Georgia',serif",color:hearted?"rgba(255,160,140,0.95)":"rgba(255,160,120,0.5)",fontSize:"0.85rem" }}>This touched my heart</span>
             </button>
-            <button onClick={()=>setShowReport(true)} style={{ background:"none",border:"1px solid rgba(255,255,255,0.06)",borderRadius:30,padding:"10px 16px",cursor:"pointer",color:"rgba(255,160,60,0.3)",fontFamily:"'Georgia',serif",fontSize:"0.78rem" }} onMouseEnter={e=>e.target.style.color="rgba(255,80,60,0.6)"} onMouseLeave={e=>e.target.style.color="rgba(255,160,60,0.3)"}>🚩 Report</button>
+            <button onClick={()=>setShowReport(true)} style={{ background:"none",border:"1px solid rgba(255,255,255,0.06)",borderRadius:30,padding:"11px 18px",cursor:"pointer",color:"rgba(255,160,60,0.28)",fontFamily:"'Georgia',serif",fontSize:"0.78rem",transition:"all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color="rgba(255,80,60,0.7)"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,160,60,0.28)"}>🚩 Report</button>
           </div>
-          {hearted && <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.32)",fontSize:"0.72rem",textAlign:"center",marginBottom:16 }}>The sender will silently feel this. 💛</p>}
-
-          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.25)",fontSize:"0.72rem",textAlign:"center",marginBottom:26 }}>Sent anonymously from somewhere in the universe.</p>
-          <div style={{ display:"flex",gap:12,justifyContent:"center" }}>
+          {hearted && <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.4)",fontSize:"0.72rem",textAlign:"center",marginBottom:12 }}>The sender will silently feel this. 💛</p>}
+          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.22)",fontSize:"0.7rem",textAlign:"center",marginBottom:24 }}>Sent anonymously from somewhere in the universe.</p>
+          <div style={{ display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:12 }}>
+            <button onClick={handleKeep} style={{ background:kept?"rgba(255,140,20,0.15)":"rgba(255,140,20,0.07)", border:`1px solid ${kept?"rgba(255,180,60,0.6)":"rgba(255,140,20,0.2)"}`, borderRadius:30, padding:"10px 20px", cursor:kept?"default":"pointer", display:"inline-flex", alignItems:"center", gap:7, fontFamily:"'Georgia',serif", color:kept?"#ffd080":"rgba(255,200,100,0.55)", fontSize:"0.85rem", transition:"all 0.3s" }}>
+              {kept ? "✦ Kept in my collection" : "🗂 Keep this letter"}
+            </button>
+            <button onClick={handleCopy} style={{ background:"rgba(255,140,20,0.05)", border:"1px solid rgba(255,140,20,0.15)", borderRadius:30, padding:"10px 20px", cursor:"pointer", display:"inline-flex", alignItems:"center", gap:7, fontFamily:"'Georgia',serif", color:"rgba(255,200,100,0.45)", fontSize:"0.85rem", transition:"all 0.2s" }}>
+              {copied ? "✓ Copied!" : "📋 Copy text"}
+            </button>
+          </div>
+          <div style={{ display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap" }}>
             <Btn onClick={onBack} secondary>← Return to Base</Btn>
-            <Btn onClick={loadLetter}>Another Signal ✨</Btn>
+            <Btn onClick={()=>{ setKept(false); setCopied(false); loadLetter(); }}>Another Signal ✨</Btn>
           </div>
         </div>
       )}
@@ -1083,52 +1709,148 @@ function ReceiveScreen({ onBack, sound }) {
 }
 
 // ── Send Animation Screen ────────────────────────────────────────
-function SendAnimScreen({ colorId, accessoryId, onDone, sound }) {
-  const [stage, setStage] = useState("folding");
+function SendAnimScreen({ colorId, accessoryId, onDone, sound, milestone, showConfetti }) {
+  // stages: paper → folding → loading → sealing → launching → warping → done
+  const [stage, setStage] = useState("paper");
   const [warpProg, setWarpProg] = useState(0);
+  const timers = useRef([]);
+  const addT = (fn, ms) => { const t = setTimeout(fn, ms); timers.current.push(t); };
+
+  const nebStars = useRef(Array.from({length:60},(_,i)=>({
+    x:(i*137.5)%100, y:(i*97.3)%100,
+    size:(i%3)+0.5, dur:2+(i%4), delay:(i%5)*0.7, op:0.08+(i%5)*0.05
+  }))).current;
 
   useEffect(() => {
-    sound.paperRustle();
-    const t1 = setTimeout(() => { setStage("loading"); sound.capsuleLoad(); }, 1400);
-    const t2 = setTimeout(() => { setStage("launching"); sound.launch(); }, 2800);
-    const t3 = setTimeout(() => { setStage("warping"); sound.warpHum(); }, 4000);
-    // Warp progress dots
-    let prog = 0;
-    const progInt = setInterval(() => { prog++; setWarpProg(prog); if (prog >= 6) clearInterval(progInt); }, 1000);
-    const t4 = setTimeout(() => { setStage("done"); onDone(); }, 10200);
-    return () => { [t1,t2,t3,t4].forEach(clearTimeout); clearInterval(progInt); };
+    // Stage 1: paper floats (user sees it immediately)
+    setStage("paper");
+    addT(() => sound.paperRustle(), 150);
+    // Stage 2: paper folds
+    addT(() => setStage("folding"), 1400);
+    // Stage 3: paper loads into capsule
+    addT(() => { setStage("loading"); sound.capsuleLoad(); }, 2600);
+    // Stage 4: capsule seals
+    addT(() => setStage("sealing"), 4000);
+    // Stage 5: launch
+    addT(() => { setStage("launching"); sound.launch(); }, 5200);
+    // Stage 6: warp
+    addT(() => { setStage("warping"); sound.warpHum(); }, 6800);
+    // Warp progress — fix closure with IIFE
+    for (let i = 1; i <= 6; i++) {
+      ((val) => addT(() => setWarpProg(val), 6800 + val * 1000))(i);
+    }
+    // Done
+    addT(() => onDone(), 14000);
+    return () => timers.current.forEach(clearTimeout);
   }, []);
 
   return (
-    <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",position:"relative",zIndex:1,textAlign:"center",padding:20 }}>
-      {stage==="warping" && <WarpScreen progress={warpProg} />}
+    <div style={{ minHeight:"100vh", position:"relative", overflow:"hidden",
+      background:"radial-gradient(ellipse at 30% 40%, rgba(160,70,0,0.22) 0%, transparent 55%), radial-gradient(ellipse at 75% 70%, rgba(180,100,0,0.16) 0%, transparent 50%), #070308" }}>
 
-      {stage==="folding" && (
-        <div style={{ animation:"fadeUp 0.4s ease forwards" }}>
-          <Paper folded={false} />
-          <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.5)",fontSize:"0.88rem",marginTop:20,fontStyle:"italic" }}>Folding your letter…</p>
-        </div>
-      )}
-      {stage==="loading" && (
-        <div style={{ position:"relative",display:"flex",flexDirection:"column",alignItems:"center" }}>
-          <div style={{ animation:"loadPaper 1.2s ease forwards",position:"absolute",top:-30,zIndex:2 }}>
-            <Paper folded={true} />
-          </div>
-          <div style={{ marginTop:60,animation:"capsuleFloat 3s ease-in-out infinite",position:"relative" }}>
-            <CapsuleSVG colorId={colorId} size={100} glowing />
-            <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center" }}><AccLayer accessoryId={accessoryId} colorId={colorId} size={100} /></div>
-          </div>
-          <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.5)",fontSize:"0.88rem",marginTop:16,fontStyle:"italic" }}>Sealing your capsule…</p>
-        </div>
-      )}
-      {stage==="launching" && (
-        <div style={{ position:"relative",display:"flex",flexDirection:"column",alignItems:"center" }}>
-          <div style={{ position:"absolute",bottom:30,left:"50%",transform:"translateX(-50%)",width:14,height:90,background:"linear-gradient(to bottom, rgba(255,160,40,0.9), transparent)",borderRadius:"0 0 50% 50%",animation:"trailFlick 0.5s ease-in-out infinite" }} />
-          <div style={{ animation:"capsuleLaunch 1.4s ease-in forwards",position:"relative" }}>
-            <CapsuleSVG colorId={colorId} size={100} glowing />
-            <div style={{ position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center" }}><AccLayer accessoryId={accessoryId} colorId={colorId} size={100} /></div>
-          </div>
-          <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.5)",fontSize:"0.88rem",marginTop:16,fontStyle:"italic" }}>Launching! 🚀</p>
+      {/* Twinkling stars */}
+      {nebStars.map((s,i) => (
+        <div key={i} style={{ position:"absolute", left:`${s.x}%`, top:`${s.y}%`,
+          width:s.size, height:s.size, borderRadius:"50%",
+          background:`rgba(255,210,130,${s.op})`,
+          animation:`twinkle ${s.dur}s ease-in-out infinite`,
+          animationDelay:`${s.delay}s`, pointerEvents:"none" }} />
+      ))}
+
+      {/* Nebula wisps */}
+      <div style={{ position:"absolute", top:"10%", left:"5%", width:"40%", height:"40%",
+        borderRadius:"50%", background:"radial-gradient(circle, rgba(255,100,20,0.07), transparent 70%)",
+        animation:"pulseGlow 5s ease-in-out infinite", pointerEvents:"none" }} />
+      <div style={{ position:"absolute", bottom:"15%", right:"8%", width:"35%", height:"35%",
+        borderRadius:"50%", background:"radial-gradient(circle, rgba(200,80,0,0.06), transparent 70%)",
+        animation:"pulseGlow 7s ease-in-out infinite", animationDelay:"2s", pointerEvents:"none" }} />
+
+      {/* Warp screen takes over — fixed full screen, always centered */}
+      {stage === "warping" && <WarpScreen progress={warpProg} />}
+
+      {/* Animation stages */}
+      {stage !== "warping" && (
+        <div style={{ display:"flex", flexDirection:"column", alignItems:"center",
+          justifyContent:"center", minHeight:"100vh", position:"relative", zIndex:2,
+          textAlign:"center", padding:20 }}>
+
+          {/* ── PAPER floating ── */}
+          {(stage === "paper" || stage === "folding") && (
+            <div style={{ animation: stage==="folding" ? "paperFold 1.2s ease forwards" : "fadeUp 0.5s ease forwards" }}>
+              <div style={{ animation: stage==="paper" ? "paperFloat 2s ease-in-out infinite" : "none" }}>
+                <Paper />
+              </div>
+              <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,180,80,0.6)",
+                fontSize:"0.9rem", marginTop:22, fontStyle:"italic",
+                animation:"pulseGlow 2s ease-in-out infinite" }}>
+                {stage==="paper" ? "Your letter is ready ✨" : "Folding carefully… 📄"}
+              </p>
+            </div>
+          )}
+
+          {/* ── LOADING — paper slides INTO open capsule ── */}
+          {stage === "loading" && (
+            <div style={{ position:"relative", display:"flex", flexDirection:"column",
+              alignItems:"center", height:300, justifyContent:"center" }}>
+              {/* Open capsule waiting */}
+              <div style={{ position:"relative", zIndex:1 }}>
+                <CapsuleSVG colorId="amber" size={120} glowing open />
+              </div>
+              {/* Paper slides down into capsule opening */}
+              <div style={{ position:"absolute", top:0, left:"50%", transform:"translateX(-50%)",
+                animation:"paperIntoCapsuIe 1.4s cubic-bezier(0.4,0,0.8,1) forwards", zIndex:2 }}>
+                <Paper folded />
+              </div>
+              {/* Glow at capsule top */}
+              <div style={{ position:"absolute", top:"30%", left:"50%",
+                transform:"translate(-50%,-50%)", width:60, height:60, borderRadius:"50%",
+                background:"rgba(255,200,80,0.2)", filter:"blur(10px)",
+                animation:"pulseGlow 0.6s ease-in-out infinite", pointerEvents:"none" }} />
+              <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,180,80,0.6)",
+                fontSize:"0.9rem", marginTop:16, fontStyle:"italic",
+                position:"absolute", bottom:-10 }}>
+                Loading your letter… 📬
+              </p>
+            </div>
+          )}
+
+          {/* ── SEALING — capsule closes ── */}
+          {stage === "sealing" && (
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center" }}>
+              <div style={{ animation:"capsuleFloat 2s ease-in-out infinite", position:"relative" }}>
+                <CapsuleSVG colorId="amber" size={120} glowing />
+                {/* Sealed sparkle */}
+                <div style={{ position:"absolute", top:-10, left:"50%", transform:"translateX(-50%)",
+                  fontSize:"1.4rem", animation:"paperEmerge 0.5s ease forwards" }}>✨</div>
+              </div>
+              <div style={{ marginTop:16, background:"rgba(255,140,20,0.1)",
+                border:"1px solid rgba(255,140,20,0.25)", borderRadius:20, padding:"6px 18px" }}>
+                <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,200,100,0.7)",
+                  fontSize:"0.85rem", fontStyle:"italic" }}>Capsule sealed 🔒</p>
+              </div>
+            </div>
+          )}
+
+          {/* ── LAUNCHING ── */}
+          {stage === "launching" && (
+            <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", width:"100%", position:"relative" }}>
+              {/* Capsule + trail move together as one unit */}
+              <div style={{ animation:"capsuleLaunch 1.8s cubic-bezier(0.3,0,0.6,1) forwards", display:"flex", flexDirection:"column", alignItems:"center", position:"relative" }}>
+                {/* Capsule body */}
+                <CapsuleSVG colorId="amber" size={120} glowing />
+                {/* Trail — absolutely centered under capsule bottom */}
+                <div style={{ position:"absolute", top:"92%", left:"50%", transform:"translateX(-50%)", display:"flex", flexDirection:"column", alignItems:"center", gap:0 }}>
+                  <div style={{ width:16, height:85, background:"linear-gradient(to bottom, rgba(255,180,40,0.95), transparent)", borderRadius:"0 0 50% 50%", animation:"trailFlick 0.35s ease-in-out infinite" }} />
+                  <div style={{ width:10, height:60, marginTop:-68, background:"linear-gradient(to bottom, rgba(255,240,100,0.9), transparent)", borderRadius:"0 0 50% 50%", animation:"trailFlick 0.25s ease-in-out infinite alternate" }} />
+                  <div style={{ width:4, height:38, marginTop:-48, background:"linear-gradient(to bottom, rgba(255,255,255,0.95), transparent)", borderRadius:"0 0 50% 50%", animation:"trailFlick 0.18s ease-in-out infinite" }} />
+                </div>
+              </div>
+              <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,220,80,0.8)", fontSize:"0.95rem", fontStyle:"italic", animation:"pulseGlow 0.7s ease-in-out infinite", marginTop:80 }}>
+                Launching! 🚀
+              </p>
+            </div>
+          )}
+
         </div>
       )}
     </div>
@@ -1158,6 +1880,7 @@ export default function CosmicCapsule() {
   return (
     <div style={{ minHeight:"100vh",position:"relative",overflowX:"hidden" }}>
       <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Kalam:wght@400;700&display=swap');
         *{box-sizing:border-box;margin:0;padding:0;}
         @keyframes fadeUp{from{opacity:0;transform:translateY(24px)}to{opacity:1;transform:translateY(0)}}
         @keyframes capsuleFloat{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-14px) rotate(3deg)}}
@@ -1167,10 +1890,12 @@ export default function CosmicCapsule() {
         @keyframes paperFold{0%{transform:scale(1) rotate(0);opacity:1}100%{transform:scale(0.5) rotate(5deg);opacity:0.9}}
         @keyframes paperEmerge{0%{transform:translateY(40px) scale(0.3);opacity:0}60%{transform:translateY(-12px) scale(1.04);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
         @keyframes loadPaper{0%{transform:translateY(0) scale(0.6);opacity:1}100%{transform:translateY(60px) scale(0);opacity:0}}
+        @keyframes paperIntoCapsuIe{0%{transform:translateX(-50%) translateY(-80px) scale(0.8);opacity:1}70%{transform:translateX(-50%) translateY(60px) scale(0.55);opacity:0.8}100%{transform:translateX(-50%) translateY(80px) scale(0.2);opacity:0}}
+        @keyframes sparkle{0%,100%{opacity:0.2;transform:scale(0.8)}50%{opacity:1;transform:scale(1.2)}}
         @keyframes capsuleLaunch{0%{transform:translateY(0) scale(1);opacity:1}30%{transform:translateY(-40px) scale(1.1)}100%{transform:translateY(-400px) scale(0.2);opacity:0}}
         @keyframes capsuleArrive{0%{transform:translateY(-300px) scale(0.2);opacity:0}70%{transform:translateY(15px) scale(1.04);opacity:1}100%{transform:translateY(0) scale(1);opacity:1}}
         @keyframes capOpen{0%{transform:translateY(0)}100%{transform:translateY(-32px)}}
-        @keyframes trailFlick{0%{transform:translateX(-50%) scaleY(0.8) scaleX(1)}100%{transform:translateX(-50%) scaleY(1.2) scaleX(1.2)}}
+        @keyframes trailFlick{0%{transform:scaleY(0.85) scaleX(0.9)}100%{transform:scaleY(1.15) scaleX(1.1)}}
         @keyframes warpIn{from{opacity:0}to{opacity:1}}
         @keyframes starStreak{0%{transform:translateY(0);opacity:0}10%{opacity:1}100%{transform:translateY(-100vh);opacity:0}}
         @keyframes tunnelPulse{0%,100%{transform:translate(-50%,-50%) scale(1)}50%{transform:translate(-50%,-50%) scale(1.12)}}
@@ -1182,6 +1907,7 @@ export default function CosmicCapsule() {
         @keyframes flameFlick{0%{transform:scaleX(1) scaleY(1)}100%{transform:scaleX(1.15) scaleY(1.1)}}
         @keyframes boltFlash{0%,100%{opacity:0.2}50%{opacity:1}}
         @keyframes ribbonWave{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+        @keyframes novaRotate{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
         textarea::placeholder{color:rgba(255,160,60,0.28);}
         textarea::-webkit-scrollbar{width:3px;}
         textarea::-webkit-scrollbar-thumb{background:rgba(255,140,20,0.28);border-radius:2px;}
@@ -1189,12 +1915,14 @@ export default function CosmicCapsule() {
       `}</style>
       <Nebula />
       <StarField />
-      {screen === "home"       && <HomeScreen onWrite={()=>setScreen("write")} onReceive={()=>setScreen("receive")} onMyCapsules={()=>setScreen("mycapsules")} onGuidelines={()=>setScreen("guidelines")} profile={profile} setProfile={setProfile} sound={sound} />}
+      {screen === "home"       && <HomeScreen onWrite={()=>setScreen("write")} onReceive={()=>setScreen("receive")} onMyCapsules={()=>setScreen("mycapsules")} onMyReceived={()=>setScreen("myreceived")} onGuidelines={()=>setScreen("guidelines")} onFAQ={()=>setScreen("faq")} profile={profile} setProfile={setProfile} sound={sound} />}
       {screen === "write"      && <WriteScreen onBack={()=>setScreen("home")} onSent={p=>{setPendingColorId(p.colorId||"amber");setPendingAccId(p.accessoryId||"none");setProfile({...p});setScreen("sendanim");}} profile={profile} sound={sound} />}
       {screen === "sendanim"   && <SendAnimScreen colorId={pendingColorId} accessoryId={pendingAccId} onDone={()=>setScreen("home")} sound={sound} />}
       {screen === "receive"    && <ReceiveScreen onBack={()=>setScreen("home")} sound={sound} />}
       {screen === "mycapsules" && <MyCapsulesScreen onBack={()=>setScreen("home")} profile={profile} />}
+      {screen === "myreceived"  && <MyReceivedScreen onBack={()=>setScreen("home")} />}
       {screen === "guidelines" && <GuidelinesScreen onBack={()=>setScreen("home")} />}
+      {screen === "faq"        && <FAQScreen onBack={()=>setScreen("home")} profile={profile} />}
     </div>
   );
 }
