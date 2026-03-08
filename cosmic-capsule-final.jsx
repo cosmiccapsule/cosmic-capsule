@@ -3,7 +3,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ── Constants ────────────────────────────────────────────────────
 const SUPABASE_URL = "https://mexfvhokidhrbpqxwubq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1leGZ2aG9raWRocmJwcXh3dWJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NjI3OTIsImV4cCI6MjA4ODIzODc5Mn0.LeOEQhkPOsk_l5sOp6h_GrjPeZPbbIEbQR8obKRM9HA";
-const MAX_DAILY = 7;
+const MAX_DAILY = 3;
+const MAX_DAILY_RECEIVE = 3;
 const MILESTONES = [10, 25, 50, 100, 250, 500];
 
 const RANKS = [
@@ -38,33 +39,15 @@ const FALLBACK_LETTERS = [
   { message: "Dear stranger. You don't know me and I don't know you. But I thought about you today — whoever you are, wherever you are — and I wished you something good. That's all. I hope it reaches you. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 1).toISOString(), theme: "open" },
   { message: "I wish you a morning soon where everything feels unhurried. The light comes in sideways. You have nowhere to be yet. And for a moment, the world is just quiet and yours. 🌅", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 2).toISOString(), theme: "hope" },
   { message: "Courage isn't the absence of fear. It's doing the thing anyway — shaking hands, dry mouth, heart loud in your chest. If that's you right now, I see you. Keep going. 🦁", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 3).toISOString(), theme: "courage" },
-  { message: "Isn't it strange and beautiful that we exist at all? That out of everything, here you are — reading this, breathing, carrying your particular life. I'm grateful you're here. 🌸", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 4).toISOString(), theme: "gratitude" },
-  { message: "I wish upon the nearest star that something finds you this week — a sign, a break, a reason to exhale. You've been holding your breath long enough. Let it go now. 🌠", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 5).toISOString(), theme: "stardust" },
-  { message: "Some days healing looks like crying in the shower and still making breakfast. Some days it looks like sending a message you were scared to send. It all counts. Every bit of it. 🕊️", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 6).toISOString(), theme: "healing" },
-  { message: "Tomorrow is genuinely unknown. That's the frightening part — and also, quietly, the most hopeful thing in the world. Something could change. Something good could arrive. It still can. ✨", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 7).toISOString(), theme: "hope" },
-  { message: "You've already made it through 100% of your hardest days. That's an unbroken record. I hope you let that land for a second. You are more resilient than you give yourself credit for. 💫", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 8).toISOString(), theme: "courage" },
-  { message: "Hi. I don't know you. You don't know me. Somewhere between here and there, this little letter found you. I hope that's a good thing. I think it is. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 9).toISOString(), theme: "open" },
-  { message: "I wish you a song today that feels like it was written for you. A meal that actually satisfies. And one person who looks at you and really, truly sees you. 🌠", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 10).toISOString(), theme: "stardust" },
-  { message: "You are not who you were a year ago. And a year from now, you'll look back at today and see how much further you've come. Growth is quiet. But it's happening. 🌟", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 11).toISOString(), theme: "open" },
-  { message: "If you're reading this at night when everything feels heavier — that's okay. Night distorts things. Tomorrow morning will weigh less. I promise. Sleep if you can. 🕊️", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 12).toISOString(), theme: "healing" },
-  { message: "Nobody has it together the way it looks. Everyone is improvising. Everyone is tired. You're not behind — you're just human, doing your best with what you have. That's enough. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 13).toISOString(), theme: "open" },
-  { message: "Something is still possible for you that hasn't happened yet. A version of your life that feels more like you. It hasn't arrived. But it isn't gone. Hold on loosely. 🌅", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 14).toISOString(), theme: "hope" },
-  { message: "Your timeline is not anyone else's timeline. The things that are yours will come to you in the time they're meant to. Trust that. Comparison is just imagination pretending to be fact. 🌸", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 1).toISOString(), theme: "gratitude" },
-  { message: "I hope something makes you laugh today — not a polite smile, but the real kind. Involuntary. Slightly embarrassing. The kind that reminds you you're still light inside. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 2).toISOString(), theme: "open" },
-  { message: "Feeling things deeply is not a flaw. It means you're paying attention. The world needs people who notice, who care, who stay soft even when it's hard to. Don't shrink. ✨", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 3).toISOString(), theme: "courage" },
-  { message: "You're allowed to still be figuring it out. Allowed to change your mind. Allowed to be a different person than you were last year. That's not inconsistency. That's growth. 🌱", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 4).toISOString(), theme: "healing" },
-  { message: "Someone remembers a kind thing you did and doesn't know how to tell you. The small ways you show up for people — they ripple further than you'll ever see. 🌟", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 5).toISOString(), theme: "gratitude" },
-  { message: "This letter crossed the dark between stars to find you today. I hope it lands softly. I hope it says what you needed to hear. You were worth sending it to. 🚀", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 6).toISOString(), theme: "open" },
-  { message: "Your body has kept you alive through everything. Every hard night, every anxious morning, every time you forgot to be kind to it. It's still here. Maybe say thank you to it today. 🌿", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 7).toISOString(), theme: "healing" },
-  { message: "One small decision today could be the thing you look back on and say — that's when things started to change. You don't need a grand moment. Just one small, brave step. 🌅", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 8).toISOString(), theme: "hope" },
-  { message: "If you're someone who holds space for everyone else — this one is for you. You deserve someone who holds space for you too. I hope you find that person. Or already have them. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 9).toISOString(), theme: "open" },
-  { message: "The hard seasons made you someone who understands. Someone with depth. Someone who can sit with others in their pain without flinching. That's not nothing. That's everything. 🌸", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 10).toISOString(), theme: "gratitude" },
-  { message: "Whatever dream you've been quietly carrying — the one you haven't told anyone about yet — I hope you give it a little more room to breathe. It deserves to exist. So do you. 🌠", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 11).toISOString(), theme: "stardust" },
-  { message: "Maybe you're about to do something scary. Say something honest. Start something new. Walk away from something familiar. Whatever it is — I'm rooting for you from here. 🦁", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 12).toISOString(), theme: "courage" },
-  { message: "You've replayed that moment a hundred times. It wasn't as bad as your brain keeps insisting. And even if it was — you're still here, still trying. That's the whole thing. 🕊️", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 13).toISOString(), theme: "healing" },
-  { message: "You don't have to be productive today. You don't have to be inspiring or put-together or okay. You just have to exist. That's allowed. That's enough for today. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 14).toISOString(), theme: "open" },
-  { message: "Rest is not giving up. It is not laziness. It is not falling behind. Rest is how you survive long enough to see what comes next. Please rest if you need to. 🌙", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 15).toISOString(), theme: "hope" },
-  { message: "Somewhere out there, a stranger took a moment out of their day to write something kind — just in case you needed it. You were worth that moment. You still are. 🚀", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 16).toISOString(), theme: "open" },
+  { message: "Some days healing looks like crying in the shower and still making breakfast. Some days it looks like sending a message you were scared to send. It all counts. Every bit of it. 🕊️", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 4).toISOString(), theme: "healing" },
+  { message: "Isn't it strange and beautiful that we exist at all? That out of everything, here you are — reading this, breathing, carrying your particular life. I'm grateful you're here. 🌸", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 5).toISOString(), theme: "gratitude" },
+  { message: "Whatever dream you've been quietly carrying — the one you haven't told anyone about yet — I hope you give it a little more room to breathe. It deserves to exist. So do you. 🌠", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 6).toISOString(), theme: "stardust" },
+  { message: "Nobody has it together the way it looks. Everyone is improvising. Everyone is tired. You're not behind — you're just human, doing your best with what you have. That's enough. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 7).toISOString(), theme: "open" },
+  { message: "If you're reading this at night when everything feels heavier — that's okay. Night distorts things. Tomorrow morning will weigh less. I promise. Sleep if you can. 🕊️", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 8).toISOString(), theme: "healing" },
+  { message: "Someone remembers a kind thing you did and doesn't know how to tell you. The small ways you show up for people — they ripple further than you'll ever see. 🌟", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 9).toISOString(), theme: "gratitude" },
+  { message: "You don't have to be productive today. You don't have to be inspiring or put-together or okay. You just have to exist. That's allowed. That's enough for today. 💛", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 10).toISOString(), theme: "open" },
+  { message: "Rest is not giving up. It is not laziness. It is not falling behind. Rest is how you survive long enough to see what comes next. Please rest if you need to. 🌙", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 11).toISOString(), theme: "hope" },
+  { message: "This letter crossed the dark between stars to find you today. I hope it lands softly. I hope it says what you needed to hear. You were worth sending it to. 🚀", color_id: "amber", accessory_id: "none", created_at: new Date(Date.now() - 86400000 * 12).toISOString(), theme: "open" },
 ];
 
 // ── Sound Engine ─────────────────────────────────────────────────
@@ -196,7 +179,7 @@ function getProfile() {
     sent: 0, isPremium: true, letters: [], received: [],
     dailyCount: 0, lastDay: "", streak: 0,
     lastStreakDay: "", colorId: "amber", accessoryId: "none",
-    soundOn: true,
+    soundOn: true, receiveCount: 0, lastReceiveDay: "",
   };
   try { localStorage.setItem("cosmic_profile", JSON.stringify(p)); } catch(e) {}
   return p;
@@ -217,6 +200,17 @@ function getDailyRemaining() {
   const p = getProfile(); const today = getTodayStr();
   if (p.lastDay !== today) return MAX_DAILY;
   return Math.max(0, MAX_DAILY - (p.dailyCount || 0));
+}
+function getDailyReceiveRemaining() {
+  const p = getProfile(); const today = getTodayStr();
+  if (p.lastReceiveDay !== today) return MAX_DAILY_RECEIVE;
+  return Math.max(0, MAX_DAILY_RECEIVE - (p.receiveCount || 0));
+}
+function recordReceive() {
+  const p = getProfile(); const today = getTodayStr();
+  if (p.lastReceiveDay !== today) { p.receiveCount = 0; p.lastReceiveDay = today; }
+  p.receiveCount = (p.receiveCount || 0) + 1;
+  saveProfile(p);
 }
 function getSecondsUntilMidnight() {
   const now = new Date();
@@ -725,11 +719,11 @@ function WarpScreen({ progress, receive }) {
         <p style={{ fontFamily: "'Georgia',serif", color: "rgba(255,220,140,0.9)", fontSize: "1.05rem", letterSpacing: "0.08em", textShadow: "0 0 20px rgba(255,160,40,0.8)", animation: "pulseGlow 1.5s ease-in-out infinite" }}>{receive ? "A capsule is racing toward you…" : "Traveling through the cosmos…"}</p>
         <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(180,140,255,0.55)", fontSize: "0.82rem", marginTop: 6 }}>{receive ? "hold on, something is coming" : "your kindness is on its way"}</p>
         <div style={{ display: "flex", gap: 8, justifyContent: "center", marginTop: 20 }}>
-          {[...Array(6)].map((_,i)=>(
+          {[...Array(3)].map((_,i)=>(
             <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < progress ? "#ffa520" : "rgba(255,140,20,0.2)", boxShadow: i < progress ? "0 0 10px rgba(255,140,20,0.8)" : "none", transition: "all 0.4s ease" }} />
           ))}
         </div>
-        <p style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.35)", fontSize: "0.72rem", marginTop: 8, fontStyle: "italic" }}>{6 - progress} light-years remaining</p>
+        <p style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.35)", fontSize: "0.72rem", marginTop: 8, fontStyle: "italic" }}>{3 - progress} light-years remaining</p>
       </div>
     </div>
   );
@@ -898,6 +892,10 @@ function FAQScreen({ onBack, profile }) {
       a: "It's your personal recovery key — a unique code like STAR-4829-MOON that's automatically generated for you. If you ever lose your data, you can enter it on a new device to restore your profile. Write it down somewhere safe."
     },
     {
+      q: "Will I ever receive a letter I sent myself?",
+      a: "Never. We make sure of that. Every letter you send is permanently excluded from what you can receive. Your words go out into the universe for someone else — a stranger you'll never meet."
+    },
+    {
       q: "Who can see the letters I send?",
       a: "Only a random stranger who receives it. Nobody else. Not us, not anyone. Letters are not publicly listed anywhere."
     },
@@ -912,6 +910,10 @@ function FAQScreen({ onBack, profile }) {
     {
       q: "Is this app free?",
       a: "Yes, entirely free. If Cosmic Capsule brings you joy, you're welcome to support the cosmos with a coffee — but there's no pressure and no premium features. Kindness should be free."
+    },
+    {
+      q: "Why can I only send and receive 3 letters a day?",
+      a: "Because each one should feel like something. The limit keeps Cosmic Capsule from becoming a feed you scroll through mindlessly. Three sends. Three receives. Each one a real moment. That's the whole point."
     },
   ];
 
@@ -987,6 +989,7 @@ function GuidelinesScreen({ onBack }) {
     ["🌱","No promotion","This is not a place for marketing, advertising, or self-promotion of any kind."],
     ["🛡️","No harm","Content that could cause distress, encourage self-harm, or threaten others is strictly forbidden."],
     ["🤝","Be real","Write like a human. Spam, repetitive content, and AI-only letters without heart are discouraged."],
+    ["✨","3 and 3","You can send 3 letters and receive 3 transmissions per day. This limit exists to keep every letter meaningful and intentional — not a feed to scroll through, but a genuine moment of connection."],
   ];
   return (
     <div style={{ minHeight: "100vh", padding: "30px 20px", zIndex: 1, position: "relative", animation: "fadeUp 0.8s ease forwards" }}>
@@ -1108,6 +1111,7 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
   const [count, setCount] = useState(null);
   const rank = getRank(profile.sent || 0);
   const remaining = getDailyRemaining();
+  const receiveRemaining = getDailyReceiveRemaining();
 
   useEffect(() => { fetchLetterCount().then(c => setCount(c + 1247)).catch(() => {}); }, []);
 
@@ -1162,19 +1166,28 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
         </div>
       </div>
 
-      {/* Daily remaining dots */}
-      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 24 }}>
+      {/* Daily dots — send */}
+      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
         {[...Array(MAX_DAILY)].map((_,i) => (
           <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < remaining ? "#ffa520" : "rgba(255,140,20,0.18)", boxShadow: i < remaining ? "0 0 8px rgba(255,140,20,0.6)" : "none", transition: "all 0.3s" }} />
         ))}
         <span style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.4)", fontSize: "0.72rem", marginLeft: 6 }}>
-          {remaining > 0 ? `${remaining} letters left today` : <><CountdownTimer /> until tomorrow</>}
+          {remaining > 0 ? `${remaining} send${remaining!==1?"s":""} left` : "sends done for today"}
+        </span>
+      </div>
+      {/* Daily dots — receive */}
+      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 24 }}>
+        {[...Array(MAX_DAILY_RECEIVE)].map((_,i) => (
+          <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < receiveRemaining ? "#88ccff" : "rgba(100,180,255,0.15)", boxShadow: i < receiveRemaining ? "0 0 8px rgba(100,180,255,0.5)" : "none", transition: "all 0.3s" }} />
+        ))}
+        <span style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.4)", fontSize: "0.72rem", marginLeft: 6 }}>
+          {receiveRemaining > 0 ? `${receiveRemaining} receive${receiveRemaining!==1?"s":""} left` : <><CountdownTimer /> until tomorrow</>}
         </span>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
         <Btn onClick={onWrite} disabled={remaining === 0}>✍️ Write a Message</Btn>
-        <Btn onClick={onReceive} secondary>✨ Receive a Transmission</Btn>
+        <Btn onClick={onReceive} secondary disabled={receiveRemaining === 0}>✨ Receive a Transmission</Btn>
         <Btn onClick={onMyCapsules} secondary>📡 My Capsules</Btn>
         <Btn onClick={onMyReceived} secondary>💌 My Received Letters</Btn>
       </div>
@@ -1458,7 +1471,7 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
 }
 
 // ── Receive Screen ───────────────────────────────────────────────
-function ReceiveScreen({ onBack, sound }) {
+function ReceiveScreen({ onBack, onWrite, sound }) {
   const [stage, setStage] = useState("warp"); // warp|arriving|opening|emerging|reading
   const [warpProg, setWarpProg] = useState(0);
   const [letterData, setLetterData] = useState(null);
@@ -1466,49 +1479,53 @@ function ReceiveScreen({ onBack, sound }) {
   const [kept, setKept] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showReport, setShowReport] = useState(false);
+  const [receiveRemaining, setReceiveRemaining] = useState(getDailyReceiveRemaining());
   const timers = useRef([]);
 
   const clear = () => { timers.current.forEach(clearTimeout); timers.current = []; };
 
   const loadLetter = useCallback(async () => {
+    if (getDailyReceiveRemaining() <= 0) return;
     clear();
+    recordReceive();
+    setReceiveRemaining(getDailyReceiveRemaining());
     setStage("warp"); setWarpProg(0); setHearted(false); setKept(false); setCopied(false); setLetterData(null);
     // Fetch while warp plays
     let data = null;
-    let isFallback = false;
     try { data = await fetchRandomLetter(getSentIds(), getSeenReceivedIds()); }
     catch { data = null; }
-    // Only use fallback if DB is truly empty (null means no real letters exist)
+    // If no letters available, refund the receive count and show empty state
     if (!data) {
-      const idx = getUnseenFallback();
-      data = { ...FALLBACK_LETTERS[idx], _fallbackIdx: idx };
-      isFallback = true;
+      // Refund — don't penalise for an empty cosmos
+      const p = getProfile();
+      p.receiveCount = Math.max(0, (p.receiveCount || 1) - 1);
+      saveProfile(p);
+      setReceiveRemaining(getDailyReceiveRemaining());
+      setStage("empty");
+      return;
     }
     // Warp progress
     sound.warpHum();
-    for (let i = 1; i <= 6; i++) {
+    for (let i = 1; i <= 3; i++) {
       timers.current.push(setTimeout(() => setWarpProg(i), i * 1000));
     }
     timers.current.push(setTimeout(() => {
-      // data is always set (fallback guarantees it)
-      // Mark seen so it won't repeat
-      if (isFallback && data._fallbackIdx !== undefined) markFallbackSeen(data._fallbackIdx);
-      else if (data?.id) markLetterSeen(data.id);
+      if (data?.id) markLetterSeen(data.id);
       setLetterData(data);
       setStage("arriving");
       sound.launch();
-    }, 6200));
+    }, 3500));
     timers.current.push(setTimeout(() => {
       setStage("opening");
       sound.capsuleOpen();
-    }, 8400));
+    }, 5700));
     timers.current.push(setTimeout(() => {
       setStage("emerging");
       sound.letterEmerge();
-    }, 10200));
+    }, 7500));
     timers.current.push(setTimeout(() => {
       setStage("reading");
-    }, 11600));
+    }, 8900));
   }, []);
 
   useEffect(() => { loadLetter(); return clear; }, []);
@@ -1557,6 +1574,21 @@ function ReceiveScreen({ onBack, sound }) {
       {showReport && letterData?.id && <ReportModal letterId={letterData.id} onClose={()=>setShowReport(false)} />}
 
       {/* ── WARP stage ── */}
+      {/* ── EMPTY state — no letters in cosmos yet ── */}
+      {stage === "empty" && (
+        <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"40px 20px",textAlign:"center",animation:"fadeUp 0.8s ease forwards",zIndex:1,position:"relative" }}>
+          <div style={{ fontSize:"4rem",marginBottom:20,animation:"capsuleFloat 4s ease-in-out infinite" }}>🌌</div>
+          <p style={{ fontFamily:"'Georgia',serif",fontSize:"0.72rem",letterSpacing:"0.3em",color:"rgba(255,160,60,0.45)",textTransform:"uppercase",marginBottom:12 }}>The Cosmos is Quiet</p>
+          <h2 style={{ fontFamily:"'Georgia',serif",fontWeight:400,fontSize:"1.6rem",color:"#ffd080",marginBottom:14 }}>No transmissions yet</h2>
+          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,200,100,0.5)",fontSize:"0.95rem",lineHeight:1.8,maxWidth:320,marginBottom:8 }}>The universe is waiting for the first letter. That could be yours.</p>
+          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.3)",fontSize:"0.8rem",lineHeight:1.7,maxWidth:300,marginBottom:32 }}>Someone needs to start the signal. Be the first to send kindness into the void — and it will come back to you. 💛</p>
+          <div style={{ display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap" }}>
+            <Btn onClick={onBack} secondary>← Return to Base</Btn>
+            <Btn onClick={onWrite}>✍️ Write a Letter</Btn>
+          </div>
+        </div>
+      )}
+
       {stage === "warp" && <WarpScreen progress={warpProg} receive />}
 
       {/* ── EMPTY stage — no real letters yet ── */}
@@ -1698,9 +1730,18 @@ function ReceiveScreen({ onBack, sound }) {
               {copied ? "✓ Copied!" : "📋 Copy text"}
             </button>
           </div>
-          <div style={{ display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap" }}>
+          <div style={{ display:"flex",gap:12,justifyContent:"center",flexWrap:"wrap",marginBottom:8 }}>
             <Btn onClick={onBack} secondary>← Return to Base</Btn>
-            <Btn onClick={()=>{ setKept(false); setCopied(false); loadLetter(); }}>Another Signal ✨</Btn>
+            <Btn onClick={()=>{ setKept(false); setCopied(false); loadLetter(); }} disabled={receiveRemaining <= 0}>Another Signal ✨</Btn>
+          </div>
+          {/* Receive dots */}
+          <div style={{ display:"flex",gap:6,alignItems:"center",justifyContent:"center",marginTop:4 }}>
+            {[...Array(MAX_DAILY_RECEIVE)].map((_,i) => (
+              <div key={i} style={{ width:8,height:8,borderRadius:"50%",background:i < receiveRemaining?"#ffa520":"rgba(255,140,20,0.18)",boxShadow:i < receiveRemaining?"0 0 7px rgba(255,140,20,0.6)":"none",transition:"all 0.3s" }} />
+            ))}
+            <span style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.4)",fontSize:"0.7rem",marginLeft:6 }}>
+              {receiveRemaining > 0 ? `${receiveRemaining} transmission${receiveRemaining!==1?"s":""} left today` : <><CountdownTimer /> until tomorrow</>}
+            </span>
           </div>
         </div>
       )}
@@ -1918,7 +1959,7 @@ export default function CosmicCapsule() {
       {screen === "home"       && <HomeScreen onWrite={()=>setScreen("write")} onReceive={()=>setScreen("receive")} onMyCapsules={()=>setScreen("mycapsules")} onMyReceived={()=>setScreen("myreceived")} onGuidelines={()=>setScreen("guidelines")} onFAQ={()=>setScreen("faq")} profile={profile} setProfile={setProfile} sound={sound} />}
       {screen === "write"      && <WriteScreen onBack={()=>setScreen("home")} onSent={p=>{setPendingColorId(p.colorId||"amber");setPendingAccId(p.accessoryId||"none");setProfile({...p});setScreen("sendanim");}} profile={profile} sound={sound} />}
       {screen === "sendanim"   && <SendAnimScreen colorId={pendingColorId} accessoryId={pendingAccId} onDone={()=>setScreen("home")} sound={sound} />}
-      {screen === "receive"    && <ReceiveScreen onBack={()=>setScreen("home")} sound={sound} />}
+      {screen === "receive"    && <ReceiveScreen onBack={()=>setScreen("home")} onWrite={()=>setScreen("write")} sound={sound} />}
       {screen === "mycapsules" && <MyCapsulesScreen onBack={()=>setScreen("home")} profile={profile} />}
       {screen === "myreceived"  && <MyReceivedScreen onBack={()=>setScreen("home")} />}
       {screen === "guidelines" && <GuidelinesScreen onBack={()=>setScreen("home")} />}
