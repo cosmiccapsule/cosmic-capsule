@@ -1,4 +1,3 @@
-
 import { useState, useEffect, useRef, useCallback } from "react";
 
 // ── Constants ────────────────────────────────────────────────────
@@ -313,72 +312,31 @@ function clientSideCheck(msg) {
 }
 
 async function moderateLetter(message) {
-  // Fast local check first — catches obvious patterns instantly
   const quick = clientSideCheck(message);
   if (quick) return quick;
-
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
+  const r = await fetch("/api/moderate", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514", max_tokens: 200,
-      messages: [{ role: "user", content: `You moderate Cosmic Capsule, an anonymous positive letter app. Anonymity is sacred.
-
-REJECT if the message contains ANY of:
-- Email addresses, phone numbers, URLs, or social media handles
-- The sender's real name or any identifying signature (e.g. "- John", "Love, Sarah", "From Mike", "Sincerely, Alex")
-- Profanity, threats, violence, hate speech, bullying, or harassment
-- Sexual content, self-harm references, or anything hurtful
-- Spam, promotions, requests to contact or meet the sender
-- Negativity or content that could hurt the reader
-
-APPROVE only if: genuinely kind, warm, uplifting, no personal info whatsoever.
-
-Reply ONLY with JSON, no extra text:
-{"approved":true,"reason":"ok"} or {"approved":false,"reason":"short reason"}
-
-Letter: "${message.replace(/"/g, '\\"')}"` }],
-    }),
+    body: JSON.stringify({ message }),
   });
-  const d = await r.json();
-  return JSON.parse(d.content?.map(b => b.text||"").join("").replace(/```json|```/g,"").trim());
+  return JSON.parse(await r.text());
 }
 
 async function generateLetter(theme) {
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
+  const r = await fetch("/api/generate-letter", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514", max_tokens: 1000,
-      messages: [{ role: "user", content: `Write a warm anonymous positive letter to a stranger for Cosmic Capsule.
-Theme: "${theme.label}" — ${theme.prompt}
-Rules:
-- 3-5 sentences, heartfelt and genuine
-- Sound like a real human wrote this, not an AI
-- No names or personal info or social handles
-- No em dashes (—), no hyphens used as pauses, no ampersands (&)
-- No lists, no bullet points, no colons introducing things
-- No overly poetic or flowery language — keep it grounded and real
-- Vary sentence length naturally, like how people actually write
-- End with one fitting emoji
-Respond with ONLY the letter text.` }],
-    }),
+    body: JSON.stringify({ theme }),
   });
   const d = await r.json();
-  return d.content?.map(b => b.text||"").join("").trim() || "";
+  return d.text || "";
 }
 
 async function generatePrompt(theme) {
-  const r = await fetch("https://api.anthropic.com/v1/messages", {
+  const r = await fetch("/api/generate-prompt", {
     method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-20250514", max_tokens: 200,
-      messages: [{ role: "user", content: `Generate a short inspiring writing prompt for someone writing a positive anonymous letter.
-Theme: "${theme.label}" — ${theme.prompt}
-Rules: One sentence max 20 words, spark emotion, start with "Write about..." or "Tell a stranger..." or "Share..."
-Respond with ONLY the prompt.` }],
-    }),
+    body: JSON.stringify({ theme }),
   });
   const d = await r.json();
-  return d.content?.map(b => b.text||"").join("").trim() || theme.prompt;
+  return d.text || theme.prompt;
 }
 
 async function submitLetter(message, colorId, accessoryId, theme) {
@@ -1114,7 +1072,7 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
   const remaining = getDailyRemaining();
   const receiveRemaining = getDailyReceiveRemaining();
 
-  useEffect(() => { fetchLetterCount().then(c => setCount(c + 1247)).catch(() => {}); }, []);
+  useEffect(() => { fetchLetterCount().then(c => setCount(c)).catch(() => {}); }, []);
 
   const shareRank = () => {
     const text = `I just reached ${rank.name} ${rank.icon} on Cosmic Capsule — I've sent ${profile.sent} anonymous positive letters to strangers across the universe. 🛸\n\nJoin me at cosmiccapsule.app`;
@@ -1155,7 +1113,7 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
         <p style={{ fontFamily: "'Georgia',serif", fontSize: "0.75rem", letterSpacing: "0.3em", color: "rgba(255,160,60,0.55)", textTransform: "uppercase", marginBottom: 10, textAlign: "center" }}>A message across the universe</p>
         <h1 style={{ fontFamily: "'Georgia',serif", fontSize: "clamp(2rem,6vw,3.2rem)", fontWeight: 400, color: "transparent", background: "linear-gradient(135deg,#ffd080,#ff8c00,#ffb830)", WebkitBackgroundClip: "text", backgroundClip: "text", textAlign: "center", marginBottom: 8, lineHeight: 1.2 }}>Cosmic Capsule</h1>
         <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,200,100,0.45)", fontSize: "0.95rem", marginBottom: 6, textAlign: "center" }}>Send kindness into the void. Receive a star in return.</p>
-        {count && <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,160,60,0.4)", fontSize: "0.78rem", textAlign: "center", marginBottom: 0 }}>🌌 {count.toLocaleString()} letters drifting through the cosmos</p>}
+        {count !== null && <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,160,60,0.4)", fontSize: "0.78rem", textAlign: "center", marginBottom: 0 }}>🌌 over 500 letters drifting through the cosmos</p>}
       </div>
 
       <div style={{ margin: "32px 0", position: "relative" }}>
