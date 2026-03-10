@@ -336,7 +336,7 @@ async function generatePrompt(theme) {
     body: JSON.stringify({ theme }),
   });
   const d = await r.json();
-  return d.text || theme.prompt;
+  return d.prompt || d.text || theme.prompt;
 }
 
 async function submitLetter(message, colorId, accessoryId, theme) {
