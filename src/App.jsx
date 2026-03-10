@@ -360,16 +360,16 @@ async function fetchRandomLetter(excludeSent = [], seenReceived = []) {
     headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
   });
   const all = await r.json();
-  // Only use fallback if DB is truly empty — never mix real and fallback
+  // If DB empty, signal to use fallback
   if (!Array.isArray(all) || all.length === 0) return null;
   // Exclude letters the user sent themselves
   const notOwn = all.filter(l => !excludeSent.includes(l.id));
   const pool = notOwn.length > 0 ? notOwn : all;
-  // Exclude already-seen letters; if all seen, reset and use full pool
+  // Exclude already-seen letters
   const unseen = pool.filter(l => !seenReceived.includes(l.id));
-  return unseen.length > 0
-    ? unseen[Math.floor(Math.random() * unseen.length)]
-    : pool[Math.floor(Math.random() * pool.length)]; // full cycle reset
+  // If all real letters have been seen, return null to trigger fallback
+  if (unseen.length === 0) return null;
+  return unseen[Math.floor(Math.random() * unseen.length)];
 }
 
 async function fetchLetterHearts(ids) {
