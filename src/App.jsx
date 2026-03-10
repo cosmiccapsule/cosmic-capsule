@@ -3,8 +3,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ── Constants ────────────────────────────────────────────────────
 const SUPABASE_URL = "https://mexfvhokidhrbpqxwubq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1leGZ2aG9raWRocmJwcXh3dWJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NjI3OTIsImV4cCI6MjA4ODIzODc5Mn0.LeOEQhkPOsk_l5sOp6h_GrjPeZPbbIEbQR8obKRM9HA";
-const MAX_DAILY = 9999;
-const MAX_DAILY_RECEIVE = 9999;
+const MAX_DAILY = 5;
+const MAX_DAILY_RECEIVE = 5;
 const MILESTONES = [10, 25, 50, 100, 250, 500];
 
 const RANKS = [
@@ -19,12 +19,18 @@ const RANKS = [
 ];
 
 const THEMES = [
-  { id: "open",      label: "✨ Open Heart",          prompt: "Write a warm, open-hearted letter to a stranger." },
-  { id: "hope",      label: "🌅 Hope",                prompt: "Write about hope — for tomorrow, for dreams, for new beginnings." },
-  { id: "courage",   label: "🦁 Courage",             prompt: "Encourage a stranger who might be facing something hard." },
-  { id: "gratitude", label: "🌸 Gratitude",           prompt: "Share something you're grateful for and why it matters." },
-  { id: "stardust",  label: "🌠 Wish Upon a Star",     prompt: "Wish something beautiful upon a stranger — a dream, a hope, a quiet blessing just for them." },
-  { id: "healing",   label: "🕊️ Healing",             prompt: "Send gentle words to someone who might be healing right now." },
+  { id: "latenight",   label: "🌙 Late Night",          prompt: "Write to someone who is awake late, alone with their thoughts." },
+  { id: "hardweek",    label: "😮‍💨 Hard Week",           prompt: "Write to someone who has had a really tough week and is exhausted." },
+  { id: "startingover",label: "🌱 Starting Over",       prompt: "Write to someone beginning again after something ended." },
+  { id: "proudofyou",  label: "🎉 Proud of You",        prompt: "Tell a stranger you're proud of them, even without knowing what they did." },
+  { id: "youllbeokay", label: "🤍 You'll Be Okay",      prompt: "Reassure a stranger who is scared or uncertain about the future." },
+  { id: "lonely",      label: "🪐 Lonely",              prompt: "Write to someone who feels alone right now." },
+  { id: "smalljoys",   label: "☀️ Small Joys",          prompt: "Share something small and ordinary that made you happy recently." },
+  { id: "missingyou",  label: "💌 Missing Someone",     prompt: "Write to someone who is missing a person, a place, or a version of themselves." },
+  { id: "burnout",     label: "🕯️ Burnout",             prompt: "Write to someone who is running on empty and needs permission to rest." },
+  { id: "newchapter",  label: "🚀 New Chapter",         prompt: "Write to someone standing at the edge of something new and unknown." },
+  { id: "grateful",    label: "🌸 Gratitude",           prompt: "Share something you're genuinely grateful for and why it stays with you." },
+  { id: "healing",     label: "🕊️ Healing",             prompt: "Write gently to someone who is in the middle of healing from something." },
 ];
 
 const COLORS = [
@@ -368,24 +374,6 @@ async function moderateLetter(message) {
     body: JSON.stringify({ message }),
   });
   return JSON.parse(await r.text());
-}
-
-async function generateLetter(theme) {
-  const r = await fetch("/api/generate-letter", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ theme }),
-  });
-  const d = await r.json();
-  return d.text || "";
-}
-
-async function generatePrompt(theme) {
-  const r = await fetch("/api/generate-prompt", {
-    method: "POST", headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ theme }),
-  });
-  const d = await r.json();
-  return d.prompt || d.text || theme.prompt;
 }
 
 async function submitLetter(message, colorId, accessoryId, theme) {
@@ -951,8 +939,8 @@ function FAQScreen({ onBack, profile }) {
       a: "Cosmic Capsule is free to use. If it brings you joy, you're welcome to support the cosmos with a coffee — kindness should always be accessible."
     },
     {
-      q: "How many letters can I send and receive?",
-      a: "Write and receive as many letters as you like. Each one is a real moment of connection — take your time with them."
+      q: "Why can I only send and receive 5 letters a day?",
+      a: "Because each one should feel like something. The limit keeps Cosmic Capsule from becoming a feed you scroll through mindlessly. Five sends. Five receives. Each one a real moment of connection."
     },
   ];
 
@@ -1028,7 +1016,7 @@ function GuidelinesScreen({ onBack }) {
     ["🌱","No promotion","This is not a place for marketing, advertising, or self-promotion of any kind."],
     ["🛡️","No harm","Content that could cause distress, encourage self-harm, or threaten others is strictly forbidden."],
     ["🤝","Be real","Write like a human. Spam, repetitive content, and AI-only letters without heart are discouraged."],
-    ["✨","Write freely","Send and receive as many letters as you like. Each one should feel meaningful — take your time, write from the heart."],
+    ["✨","5 and 5","You can send 5 letters and receive 5 transmissions per day. This limit exists to keep every letter meaningful and intentional — not a feed to scroll through, but a genuine moment of connection."],
   ];
   return (
     <div style={{ minHeight: "100vh", padding: "30px 20px", zIndex: 1, position: "relative", animation: "fadeUp 0.8s ease forwards" }}>
@@ -1253,6 +1241,25 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
         </div>
       </div>
 
+      {/* Daily dots — send */}
+      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
+        {[...Array(MAX_DAILY)].map((_,i) => (
+          <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < remaining ? "#ffa520" : "rgba(255,140,20,0.18)", boxShadow: i < remaining ? "0 0 8px rgba(255,140,20,0.6)" : "none", transition: "all 0.3s" }} />
+        ))}
+        <span style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.4)", fontSize: "0.72rem", marginLeft: 6 }}>
+          {remaining > 0 ? `${remaining} send${remaining!==1?"s":""} left` : "sends done for today"}
+        </span>
+      </div>
+      {/* Daily dots — receive */}
+      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 24 }}>
+        {[...Array(MAX_DAILY_RECEIVE)].map((_,i) => (
+          <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < receiveRemaining ? "#88ccff" : "rgba(100,180,255,0.15)", boxShadow: i < receiveRemaining ? "0 0 8px rgba(100,180,255,0.5)" : "none", transition: "all 0.3s" }} />
+        ))}
+        <span style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.4)", fontSize: "0.72rem", marginLeft: 6 }}>
+          {receiveRemaining > 0 ? `${receiveRemaining} receive${receiveRemaining!==1?"s":""} left` : <><CountdownTimer /> until tomorrow</>}
+        </span>
+      </div>
+
       <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
         <Btn onClick={onWrite} disabled={remaining === 0}>✍️ Write a Message</Btn>
         <Btn onClick={onReceive} secondary disabled={receiveRemaining === 0}>✨ Receive a Transmission</Btn>
@@ -1274,14 +1281,11 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
 
 // ── Write Screen ─────────────────────────────────────────────────
 function WriteScreen({ onBack, onSent, profile, sound }) {
-  const [writeMode, setWriteMode] = useState(null);
   const [text, setText] = useState("");
-  const [theme, setTheme] = useState(THEMES[0]);
   const colorId = "amber";
   const accessoryId = "none";
   const [status, setStatus] = useState("idle");
   const [rejectReason, setRejectReason] = useState("");
-  const [aiPrompt, setAiPrompt] = useState("");
   const [subject, setSubject] = useState("");
   const isPremium = true;
   const [showConfetti, setShowConfetti] = useState(false);
@@ -1290,18 +1294,6 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
   const maxLen = 700;
 
   const col = COLORS.find(c => c.id === colorId) || COLORS[0];
-
-  const handleGetInspired = async () => {
-    setStatus("generating");
-    try { const p = await generatePrompt(theme); setAiPrompt(p); } catch { setAiPrompt(theme.prompt); }
-    setStatus("idle");
-  };
-
-  const handleAIWrite = async () => {
-    setStatus("generating");
-    try { const l = await generateLetter(theme); setText(l.slice(0, 700)); } catch { setStatus("error"); return; }
-    setStatus("idle");
-  };
 
   const handleSend = async () => {
     setStatus("checking");
@@ -1341,64 +1333,7 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
   const newRank = getRank((profile.sent || 0) + 1);
   const rankUp = status === "approved" && newRank.name !== currentRank.name;
 
-  // Step 1: Pick a theme first
-  // Step 1: pick mode
-  if (!writeMode) return (
-    <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:"30px 20px", animation:"fadeUp 0.8s ease forwards", zIndex:1, position:"relative" }}>
-      <p style={{ fontFamily:"'Georgia',serif", fontSize:"0.72rem", letterSpacing:"0.3em", color:"rgba(255,160,60,0.5)", textTransform:"uppercase", marginBottom:10 }}>New Transmission</p>
-      <h2 style={{ fontFamily:"'Georgia',serif", fontWeight:400, fontSize:"1.8rem", color:"#ffd080", marginBottom:6, textAlign:"center" }}>How would you like to write? ✨</h2>
-      <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.4)", fontSize:"0.88rem", marginBottom:32, textAlign:"center", maxWidth:340 }}>Choose how you want to craft your letter to a stranger.</p>
-      <div style={{ display:"flex", flexDirection:"column", gap:12, width:"100%", maxWidth:460 }}>
-        {[
-          ["✍️","Write it yourself","idle","A blank page, your heart, and the cosmos.","rgba(255,140,20,0.06)","rgba(255,140,20,0.25)","#ffd080"],
-          ["💡","Get inspired","inspired","Pick a theme — AI sparks a prompt, you write the words.","rgba(100,180,255,0.05)","rgba(100,180,255,0.2)","#88ccff"],
-          ["🤖","Let AI write for me","ai","Pick a theme — AI crafts the full letter. Edit or send as is.","rgba(180,100,255,0.05)","rgba(180,100,255,0.2)","#cc88ff"],
-        ].map(([icon,title,mode,desc,bg,border,color])=>(
-          <div key={mode} onClick={()=>{ if(mode==="idle"){ setWriteMode(mode); } else { setWriteMode("__picking_theme__"+mode); } }}
-            style={{ cursor:"pointer", background:bg, border:`1.5px solid ${border}`, borderRadius:14, padding:"18px 22px", display:"flex", gap:14, alignItems:"flex-start", transition:"all 0.2s" }}
-            onMouseEnter={e=>{e.currentTarget.style.transform="translateY(-2px)";e.currentTarget.style.boxShadow="0 6px 20px rgba(0,0,0,0.3)";}}
-            onMouseLeave={e=>{e.currentTarget.style.transform="none";e.currentTarget.style.boxShadow="none";}}>
-            <div style={{ fontSize:"1.6rem", lineHeight:1 }}>{icon}</div>
-            <div>
-              <div style={{ fontFamily:"'Georgia',serif", color, fontSize:"0.95rem", fontWeight:700, marginBottom:4 }}>{title}</div>
-              <div style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.38)", fontSize:"0.8rem" }}>{desc}</div>
-            </div>
-          </div>
-        ))}
-      </div>
-      <button onClick={onBack} style={{ background:"none", border:"none", color:"rgba(255,160,60,0.35)", fontFamily:"'Georgia',serif", fontSize:"0.85rem", cursor:"pointer", marginTop:28 }}>← Back</button>
-    </div>
-  );
-
-  // Step 2: theme picker — only for inspired/ai
-  if (writeMode && writeMode.startsWith("__picking_theme__")) {
-    const pendingMode = writeMode.replace("__picking_theme__","");
-    return (
-      <div style={{ display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", minHeight:"100vh", padding:"30px 20px", animation:"fadeUp 0.8s ease forwards", zIndex:1, position:"relative" }}>
-        <p style={{ fontFamily:"'Georgia',serif", fontSize:"0.72rem", letterSpacing:"0.3em", color:"rgba(255,160,60,0.5)", textTransform:"uppercase", marginBottom:10 }}>New Transmission</p>
-        <h2 style={{ fontFamily:"'Georgia',serif", fontWeight:400, fontSize:"1.8rem", color:"#ffd080", marginBottom:6, textAlign:"center" }}>Choose a theme ✨</h2>
-        <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,200,100,0.4)", fontSize:"0.88rem", marginBottom:28, textAlign:"center", maxWidth:340 }}>What feeling do you want to send into the cosmos?</p>
-        <div style={{ display:"flex", flexDirection:"column", gap:10, width:"100%", maxWidth:460, marginBottom:28 }}>
-          {THEMES.map(t => (
-            <div key={t.id} onClick={()=>setTheme(t)}
-              style={{ cursor:"pointer", background:theme.id===t.id?"rgba(255,140,20,0.14)":"rgba(255,140,20,0.04)", border:`1.5px solid ${theme.id===t.id?"rgba(255,180,60,0.7)":"rgba(255,140,20,0.15)"}`, borderRadius:14, padding:"14px 20px", display:"flex", alignItems:"center", gap:14, transition:"all 0.2s" }}
-              onMouseEnter={e=>{if(theme.id!==t.id){e.currentTarget.style.background="rgba(255,140,20,0.08)";}}}
-              onMouseLeave={e=>{if(theme.id!==t.id){e.currentTarget.style.background="rgba(255,140,20,0.04)";}}}
-            >
-              <span style={{ fontSize:"1.5rem", flexShrink:0 }}>{t.label.split(" ")[0]}</span>
-              <div>
-                <div style={{ fontFamily:"'Georgia',serif", color:theme.id===t.id?"#ffd080":"rgba(255,200,100,0.6)", fontSize:"0.92rem", fontWeight:theme.id===t.id?700:400 }}>{t.label.split(" ").slice(1).join(" ")}</div>
-                <div style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.35)", fontSize:"0.75rem", marginTop:2 }}>{t.prompt}</div>
-              </div>
-              {theme.id===t.id && <div style={{ marginLeft:"auto", width:10, height:10, borderRadius:"50%", background:"#ffa520", boxShadow:"0 0 10px rgba(255,140,20,0.8)", flexShrink:0 }} />}
-            </div>
-          ))}
-        </div>
-        <Btn onClick={()=>{ setWriteMode(pendingMode); if(pendingMode==="inspired") handleGetInspired(); if(pendingMode==="ai") handleAIWrite(); }}>Continue with {theme.label} →</Btn>
-        <button onClick={()=>setWriteMode(null)} style={{ background:"none", border:"none", color:"rgba(255,160,60,0.35)", fontFamily:"'Georgia',serif", fontSize:"0.85rem", cursor:"pointer", marginTop:16 }}>← Back</button>
-      </div>
-    );
-  }
+  // Skip mode picker — go straight to writing
 
   // Approved
   if (status === "approved") return (
@@ -1415,7 +1350,7 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
       <h2 style={{ fontFamily:"'Georgia',serif",fontWeight:400,fontSize:"1.7rem",color:"#ffd080",marginTop:20,marginBottom:10 }}>Launched into the cosmos 🌌</h2>
       <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,200,100,0.55)",fontSize:"0.92rem",maxWidth:320,marginBottom:10,lineHeight:1.7 }}>Somewhere out there, a stranger will intercept your kindness.</p>
       <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.35)",fontSize:"0.78rem",marginBottom:28,fontStyle:"italic" }}>
-        {getDailyRemaining()>0 ? `${getDailyRemaining()} letter${getDailyRemaining()!==1?"s":""} remaining today` : "That's your last one for today. Come back tomorrow! 🌙"}
+        Write as many as you like. Every letter matters. 💛
       </p>
       <Btn onClick={onBack}>Return to Base</Btn>
     </div>
@@ -1476,30 +1411,18 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
   return (
     <div style={{ display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:"100vh",padding:"30px 20px",animation:"fadeUp 0.8s ease forwards",zIndex:1,position:"relative" }}>
       
-      {(status==="checking"||status==="generating") && (
+      {status==="checking" && (
         <div style={{ position:"fixed",inset:0,zIndex:100,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(10,5,0,0.92)",flexDirection:"column",gap:18 }}>
-          <div style={{ animation:"capsuleFloat 2s ease-in-out infinite", display:"flex", justifyContent:"center" }}>{status==="generating" ? <span style={{fontSize:55}}>{writeMode==="inspired"?"💡":"🤖"}</span> : <CapsuleSVG colorId="amber" size={55} glowing />}</div>
-          <p style={{ fontFamily:"'Georgia',serif",color:"#ffd080",fontSize:"1.05rem" }}>{status==="generating"?writeMode==="inspired"?"Finding your spark…":"Crafting your letter…":"Preparing your transmission…"}</p>
-          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.45)",fontSize:"0.82rem" }}>{status==="generating"?"Consulting the stars":"Checking it's ready for the cosmos"}</p>
+          <div style={{ animation:"capsuleFloat 2s ease-in-out infinite", display:"flex", justifyContent:"center" }}><CapsuleSVG colorId="amber" size={55} glowing /></div>
+          <p style={{ fontFamily:"'Georgia',serif",color:"#ffd080",fontSize:"1.05rem" }}>"Preparing your transmission…"</p>
+          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.45)",fontSize:"0.82rem" }}>"Checking it's ready for the cosmos"</p>
           <div style={{ display:"flex",gap:10 }}>{[0,1,2].map(i=><div key={i} style={{ width:8,height:8,borderRadius:"50%",background:"#ffa520",animation:"pulseGlow 1.2s ease-in-out infinite",animationDelay:`${i*0.3}s` }}/>)}</div>
         </div>
       )}
 
       <p style={{ fontFamily:"'Georgia',serif",fontSize:"0.72rem",letterSpacing:"0.3em",color:"rgba(255,160,60,0.5)",textTransform:"uppercase",marginBottom:8 }}>New Transmission</p>
       <h2 style={{ fontFamily:"'Georgia',serif",fontWeight:400,fontSize:"1.7rem",color:"#ffd080",marginBottom:18,textAlign:"center" }}>Write your message</h2>
-
-      {/* AI prompt hint — only shown after theme was chosen */}
-      {writeMode==="inspired" && aiPrompt && (
-        <div style={{ width:"100%",maxWidth:520,marginBottom:14 }}>
-          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(150,210,255,0.7)",fontSize:"0.88rem",lineHeight:1.6 }}>💡 {aiPrompt} <button onClick={handleGetInspired} style={{ background:"none",border:"none",color:"rgba(100,180,255,0.5)",fontFamily:"'Georgia',serif",fontSize:"0.72rem",cursor:"pointer" }}>↻ new spark</button></p>
-        </div>
-      )}
-      {writeMode==="ai" && text && (
-        <div style={{ width:"100%",maxWidth:520,marginBottom:8 }}>
-          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(200,150,255,0.6)",fontSize:"0.82rem" }}>🤖 AI wrote this — feel free to edit <button onClick={handleAIWrite} style={{ background:"none",border:"none",color:"rgba(180,100,255,0.5)",fontFamily:"'Georgia',serif",fontSize:"0.72rem",cursor:"pointer" }}>↻ rewrite</button></p>
-        </div>
-      )}
-      {/* Subject/mood — available for all modes */}
+      {/* Subject/mood */}
       <div style={{ width:"100%",maxWidth:520,marginBottom:14 }}>
         <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.5)",fontSize:"0.68rem",letterSpacing:"0.15em",textTransform:"uppercase",marginBottom:8 }}>Subject or mood (optional)</p>
         <input
@@ -1513,7 +1436,7 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
       {/* Textarea */}
       <div style={{ width:"100%",maxWidth:520,background:"rgba(255,140,20,0.05)",border:`1.5px solid ${status==="rejected"?"rgba(255,80,60,0.5)":"rgba(255,140,20,0.22)"}`,borderRadius:16,padding:"4px" }}>
         <textarea value={text} onChange={e=>{setText(e.target.value.slice(0,maxLen));if(status==="rejected")setStatus("idle");}}
-          placeholder={writeMode==="inspired"&&aiPrompt?aiPrompt:"Dear stranger across the stars…"} rows={6}
+          placeholder="Dear stranger across the stars…" rows={6}
           style={{ width:"100%",background:"transparent",border:"none",outline:"none",resize:"none",color:"rgba(255,220,140,0.9)",padding:"16px 18px",fontFamily:"'Kalam',cursive",fontSize:"1.2rem",fontWeight:700,lineHeight:1.7,caretColor:"#ffa520",boxSizing:"border-box" }} />
       </div>
       <div style={{ width:"100%",maxWidth:520,display:"flex",justifyContent:"space-between",marginTop:7,marginBottom:6,color:"rgba(255,160,60,0.38)",fontFamily:"'Georgia',serif",fontSize:"0.75rem" }}>
@@ -1530,10 +1453,10 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
       {status==="error" && <p style={{ color:"rgba(255,100,60,0.8)",fontFamily:"'Georgia',serif",fontSize:"0.84rem",marginBottom:10 }}>Something went wrong. Please try again.</p>}
 
       <div style={{ display:"flex",gap:12,marginTop:8 }}>
-        <Btn onClick={()=>setWriteMode(null)} secondary>← Back</Btn>
-        <Btn onClick={()=>{ if(text.trim().length>=10) setStatus("previewing"); }} disabled={text.trim().length<10||status==="checking"||status==="generating"}>Preview Letter 👁️</Btn>
+        <Btn onClick={onBack} secondary>← Back</Btn>
+        <Btn onClick={()=>{ if(text.trim().length>=10) setStatus("previewing"); }} disabled={text.trim().length<10||status==="checking"}>Preview Letter 👁️</Btn>
       </div>
-      
+
     </div>
   );
 }
