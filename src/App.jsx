@@ -762,7 +762,15 @@ function TipModal({ onClose }) {
 
 // ── Guidelines Screen ────────────────────────────────────────────
 function MyReceivedScreen({ onBack }) {
-  const letters = getReceivedLetters();
+  const [letters, setLetters] = useState(getReceivedLetters());
+
+  const handleDelete = (index) => {
+    const p = getProfile();
+    p.received = (p.received || []).filter((_, i) => i !== index);
+    saveProfile(p);
+    setLetters([...p.received]);
+  };
+
   return (
     <div style={{ minHeight:"100vh", padding:"30px 20px", zIndex:1, position:"relative", animation:"fadeUp 0.8s ease forwards" }}>
       <div style={{ maxWidth:560, margin:"0 auto" }}>
@@ -796,7 +804,15 @@ function MyReceivedScreen({ onBack }) {
                 {/* Letter text */}
                 <p style={{ fontFamily:"'Kalam',cursive", fontWeight:700, fontSize:"1.15rem", lineHeight:1.9, color:"rgba(60,35,5,0.88)", margin:0, whiteSpace:"pre-wrap", marginTop:letter.theme?18:0 }}>{letter.message}</p>
                 {/* Footer */}
-                <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(160,110,30,0.45)", fontSize:"0.7rem", marginTop:16, marginBottom:0 }}>Kept {savedStr} · sent anonymously from somewhere in the universe</p>
+                <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:16 }}>
+                  <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(160,110,30,0.45)", fontSize:"0.7rem", margin:0 }}>Kept {savedStr} · sent anonymously from somewhere in the universe</p>
+                  <button onClick={() => handleDelete(i)}
+                    style={{ background:"none", border:"1px solid rgba(200,80,60,0.2)", borderRadius:20, padding:"4px 12px", cursor:"pointer", color:"rgba(200,80,60,0.4)", fontFamily:"'Georgia',serif", fontSize:"0.7rem", transition:"all 0.2s", flexShrink:0, marginLeft:12 }}
+                    onMouseEnter={e => { e.currentTarget.style.color="rgba(220,80,60,0.8)"; e.currentTarget.style.borderColor="rgba(220,80,60,0.5)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.color="rgba(200,80,60,0.4)"; e.currentTarget.style.borderColor="rgba(200,80,60,0.2)"; }}>
+                    🗑 Remove
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -977,7 +993,15 @@ function GuidelinesScreen({ onBack }) {
 function MyCapsulesScreen({ onBack, profile }) {
   const [heartsMap, setHeartsMap] = useState({});
   const [loading, setLoading] = useState(true);
-  const letters = profile.letters || [];
+  const [letters, setLetters] = useState(profile.letters || []);
+
+  const handleDeleteSent = (index) => {
+    const p = getProfile();
+    p.letters = (p.letters || []).filter((_, i) => i !== index);
+    p.sent = Math.max(0, (p.sent || 1) - 1);
+    saveProfile(p);
+    setLetters([...p.letters]);
+  };
 
   useEffect(() => {
     const ids = letters.map(l => l.id).filter(Boolean);
@@ -1063,6 +1087,14 @@ function MyCapsulesScreen({ onBack, profile }) {
                     </div>
                   );
                 })()}
+                <div style={{ display:"flex", justifyContent:"flex-end", marginTop:10 }}>
+                  <button onClick={() => handleDeleteSent(i)}
+                    style={{ background:"none", border:"1px solid rgba(200,80,60,0.18)", borderRadius:20, padding:"4px 12px", cursor:"pointer", color:"rgba(200,80,60,0.35)", fontFamily:"'Georgia',serif", fontSize:"0.7rem", transition:"all 0.2s" }}
+                    onMouseEnter={e => { e.currentTarget.style.color="rgba(220,80,60,0.8)"; e.currentTarget.style.borderColor="rgba(220,80,60,0.5)"; }}
+                    onMouseLeave={e => { e.currentTarget.style.color="rgba(200,80,60,0.35)"; e.currentTarget.style.borderColor="rgba(200,80,60,0.18)"; }}>
+                    🗑 Remove
+                  </button>
+                </div>
               </div>
             );
           })}
@@ -1892,7 +1924,7 @@ function createAmbientMusic() {
   const ctx = new (window.AudioContext || window.webkitAudioContext)();
   const master = ctx.createGain();
   master.gain.setValueAtTime(0, ctx.currentTime);
-  master.gain.linearRampToValueAtTime(0.09, ctx.currentTime + 3);
+  master.gain.linearRampToValueAtTime(0.11, ctx.currentTime + 3);
   master.connect(ctx.destination);
 
   // Simple gentle melody — like a soft music box
@@ -1910,7 +1942,7 @@ function createAmbientMusic() {
     o.type = "sine";
     o.frequency.value = freq;
     g.gain.setValueAtTime(0, ctx.currentTime);
-    g.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.08);
+    g.gain.linearRampToValueAtTime(0.10, ctx.currentTime + 0.08);
     g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + noteDur);
     o.connect(filter); filter.connect(g); g.connect(master);
     o.start(); o.stop(ctx.currentTime + noteDur + 0.1);
@@ -1929,7 +1961,7 @@ function createAmbientMusic() {
       master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
     },
     resume: () => {
-      master.gain.linearRampToValueAtTime(0.09, ctx.currentTime + 1.5);
+      master.gain.linearRampToValueAtTime(0.11, ctx.currentTime + 1.5);
     },
   };
 }
