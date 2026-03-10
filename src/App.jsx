@@ -1015,7 +1015,7 @@ function GuidelinesScreen({ onBack }) {
     ["🕊️","No hate","Zero tolerance for hate speech, discrimination, or content targeting any group."],
     ["🌱","No promotion","This is not a place for marketing, advertising, or self-promotion of any kind."],
     ["🛡️","No harm","Content that could cause distress, encourage self-harm, or threaten others is strictly forbidden."],
-    ["🤝","Be real","Write like a human. Spam, repetitive content, and AI-only letters without heart are discouraged."],
+    ["🤝","Be real","Write from the heart. Spam and repetitive content are not welcome here."],
     ["✨","5 and 5","You can send 5 letters and receive 5 transmissions per day. This limit exists to keep every letter meaningful and intentional — not a feed to scroll through, but a genuine moment of connection."],
   ];
   return (
