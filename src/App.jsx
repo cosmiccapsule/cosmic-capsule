@@ -3,8 +3,8 @@ import { useState, useEffect, useRef, useCallback } from "react";
 // ── Constants ────────────────────────────────────────────────────
 const SUPABASE_URL = "https://mexfvhokidhrbpqxwubq.supabase.co";
 const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im1leGZ2aG9raWRocmJwcXh3dWJxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzI2NjI3OTIsImV4cCI6MjA4ODIzODc5Mn0.LeOEQhkPOsk_l5sOp6h_GrjPeZPbbIEbQR8obKRM9HA";
-const MAX_DAILY = 7;
-const MAX_DAILY_RECEIVE = 7;
+const MAX_DAILY = 9999;
+const MAX_DAILY_RECEIVE = 9999;
 const MILESTONES = [10, 25, 50, 100, 250, 500];
 
 const RANKS = [
@@ -811,9 +811,9 @@ function TipModal({ onClose }) {
       <div style={{ background: "#120a00", border: "1.5px solid rgba(255,140,20,0.3)", borderRadius: 20, padding: "32px 28px", maxWidth: 380, width: "100%", textAlign: "center" }}>
         <div style={{ fontSize: 46, marginBottom: 14 }}>☕</div>
         <h3 style={{ fontFamily: "'Georgia',serif", color: "#ffd080", fontWeight: 400, fontSize: "1.3rem", marginBottom: 8 }}>Keep the Cosmos Alive</h3>
-        <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,200,100,0.5)", fontSize: "0.85rem", lineHeight: 1.7, marginBottom: 22 }}>Cosmic Capsule is free forever. If it made your day a little warmer, consider buying us a coffee. 🌟</p>
+        <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,200,100,0.5)", fontSize: "0.85rem", lineHeight: 1.7, marginBottom: 22 }}>If Cosmic Capsule made your day a little warmer, consider buying us a coffee. 🌟</p>
         <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 20 }}>
-          <button onClick={()=>{ window.location.href="https://buymeacoffee.com/cosmiccapsule"; onClose(); }}
+          <button onClick={()=>{ window.open("https://buymeacoffee.com/cosmiccapsule", "_blank", "noopener"); onClose(); }}
             style={{ background: "linear-gradient(135deg,#ffa520,#e06000)", border: "none", borderRadius: 50, padding: "14px 32px", color: "#1a0800", fontFamily: "'Georgia',serif", fontWeight: 700, fontSize: "1rem", cursor: "pointer", boxShadow: "0 0 20px rgba(255,140,0,0.4)", letterSpacing: "0.05em" }}>
             ☕ Buy us a coffee
           </button>
@@ -948,11 +948,11 @@ function FAQScreen({ onBack, profile }) {
     },
     {
       q: "Is this app free?",
-      a: "Yes, entirely free. If Cosmic Capsule brings you joy, you're welcome to support the cosmos with a coffee — but there's no pressure and no premium features. Kindness should be free."
+      a: "Cosmic Capsule is free to use. If it brings you joy, you're welcome to support the cosmos with a coffee — kindness should always be accessible."
     },
     {
-      q: "Why can I only send and receive 3 letters a day?",
-      a: "Because each one should feel like something. The limit keeps Cosmic Capsule from becoming a feed you scroll through mindlessly. Three sends. Three receives. Each one a real moment. That's the whole point."
+      q: "How many letters can I send and receive?",
+      a: "Write and receive as many letters as you like. Each one is a real moment of connection — take your time with them."
     },
   ];
 
@@ -1028,7 +1028,7 @@ function GuidelinesScreen({ onBack }) {
     ["🌱","No promotion","This is not a place for marketing, advertising, or self-promotion of any kind."],
     ["🛡️","No harm","Content that could cause distress, encourage self-harm, or threaten others is strictly forbidden."],
     ["🤝","Be real","Write like a human. Spam, repetitive content, and AI-only letters without heart are discouraged."],
-    ["✨","3 and 3","You can send 3 letters and receive 3 transmissions per day. This limit exists to keep every letter meaningful and intentional — not a feed to scroll through, but a genuine moment of connection."],
+    ["✨","Write freely","Send and receive as many letters as you like. Each one should feel meaningful — take your time, write from the heart."],
   ];
   return (
     <div style={{ minHeight: "100vh", padding: "30px 20px", zIndex: 1, position: "relative", animation: "fadeUp 0.8s ease forwards" }}>
@@ -1251,26 +1251,6 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
             <AccLayer accessoryId={profile.accessoryId || "none"} colorId={profile.colorId || "amber"} size={96} />
           </div>
         </div>
-      </div>
-
-
-      {/* Daily dots — send */}
-      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
-        {[...Array(MAX_DAILY)].map((_,i) => (
-          <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < remaining ? "#ffa520" : "rgba(255,140,20,0.18)", boxShadow: i < remaining ? "0 0 8px rgba(255,140,20,0.6)" : "none", transition: "all 0.3s" }} />
-        ))}
-        <span style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.4)", fontSize: "0.72rem", marginLeft: 6 }}>
-          {remaining > 0 ? `${remaining} send${remaining!==1?"s":""} left` : "sends done for today"}
-        </span>
-      </div>
-      {/* Daily dots — receive */}
-      <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 24 }}>
-        {[...Array(MAX_DAILY_RECEIVE)].map((_,i) => (
-          <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < receiveRemaining ? "#88ccff" : "rgba(100,180,255,0.15)", boxShadow: i < receiveRemaining ? "0 0 8px rgba(100,180,255,0.5)" : "none", transition: "all 0.3s" }} />
-        ))}
-        <span style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.4)", fontSize: "0.72rem", marginLeft: 6 }}>
-          {receiveRemaining > 0 ? `${receiveRemaining} receive${receiveRemaining!==1?"s":""} left` : <><CountdownTimer /> until tomorrow</>}
-        </span>
       </div>
 
       <div style={{ display: "flex", flexDirection: "column", gap: 12, alignItems: "center" }}>
@@ -2122,9 +2102,12 @@ export default function CosmicCapsule() {
   const bgMusicRef = useRef(null);
 
   const handleEnterCosmos = () => {
-    setShowSplash(false);
-    // Start background music after user gesture (required by browsers)
-    try { bgMusicRef.current = createAmbientMusic(); } catch(e) {}
+    // Play music briefly on splash then fade out as we enter
+    try {
+      const music = createAmbientMusic();
+      setTimeout(() => { try { music.fadeOut(); } catch(e) {} }, 2000);
+    } catch(e) {}
+    setTimeout(() => setShowSplash(false), 400);
   };
 
   const [profile, setProfile] = useState(getProfile());
@@ -2134,8 +2117,6 @@ export default function CosmicCapsule() {
 
   useEffect(() => { soundRef.current = createSoundEngine(); }, []);
 
-  const pauseBgMusic = () => { try { bgMusicRef.current?.pause(); } catch(e) {} };
-  const resumeBgMusic = () => { try { bgMusicRef.current?.resume(); } catch(e) {} };
 
   const sound = {
     paperRustle: () => profile.soundOn !== false && soundRef.current?.paperRustle(),
@@ -2191,8 +2172,8 @@ export default function CosmicCapsule() {
       <StarField />
       {screen === "home"       && <HomeScreen onWrite={()=>setScreen("write")} onReceive={()=>setScreen("receive")} onMyCapsules={()=>setScreen("mycapsules")} onMyReceived={()=>setScreen("myreceived")} onGuidelines={()=>setScreen("guidelines")} onFAQ={()=>setScreen("faq")} profile={profile} setProfile={setProfile} sound={sound} />}
       {screen === "write"      && <WriteScreen onBack={()=>setScreen("home")} onSent={p=>{setPendingColorId(p.colorId||"amber");setPendingAccId(p.accessoryId||"none");setProfile({...p});setScreen("sendanim");}} profile={profile} sound={sound} />}
-      {screen === "sendanim"   && <SendAnimScreen colorId={pendingColorId} accessoryId={pendingAccId} onDone={()=>{ resumeBgMusic(); setScreen("home"); }} sound={sound} onStart={pauseBgMusic} />}
-      {screen === "receive"    && <ReceiveScreen onBack={()=>{ resumeBgMusic(); setScreen("home"); }} onWrite={()=>setScreen("write")} sound={sound} onStart={pauseBgMusic} onDone={resumeBgMusic} />}
+      {screen === "sendanim"   && <SendAnimScreen colorId={pendingColorId} accessoryId={pendingAccId} onDone={()=>setScreen("home")} sound={sound} />}
+      {screen === "receive"    && <ReceiveScreen onBack={()=>setScreen("home")} onWrite={()=>setScreen("write")} sound={sound} />}
       {screen === "mycapsules" && <MyCapsulesScreen onBack={()=>setScreen("home")} profile={profile} />}
       {screen === "myreceived"  && <MyReceivedScreen onBack={()=>setScreen("home")} />}
       {screen === "guidelines" && <GuidelinesScreen onBack={()=>setScreen("home")} />}
