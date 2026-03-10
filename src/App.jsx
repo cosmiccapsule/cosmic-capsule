@@ -1192,7 +1192,6 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
   
   const [showTip, setShowTip] = useState(false);
   const [totalCount, setTotalCount] = useState(null);
-  const [todayCount, setTodayCount] = useState(null);
 
   const rank = getRank(profile.sent || 0);
   const remaining = getDailyRemaining();
@@ -1200,7 +1199,6 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
 
   useEffect(() => {
     fetchLetterCount().then(c => setTotalCount(c));
-    fetchTodaySentCount().then(c => setTodayCount(c));
   }, []);
 
 
@@ -1243,26 +1241,7 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
         <p style={{ fontFamily: "'Georgia',serif", fontSize: "0.75rem", letterSpacing: "0.3em", color: "rgba(255,160,60,0.55)", textTransform: "uppercase", marginBottom: 10, textAlign: "center" }}>A message across the universe</p>
         <h1 style={{ fontFamily: "'Georgia',serif", fontSize: "clamp(2rem,6vw,3.2rem)", fontWeight: 400, color: "transparent", background: "linear-gradient(135deg,#ffd080,#ff8c00,#ffb830)", WebkitBackgroundClip: "text", backgroundClip: "text", textAlign: "center", marginBottom: 8, lineHeight: 1.2 }}>Cosmic Capsule</h1>
         <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,200,100,0.45)", fontSize: "0.95rem", marginBottom: 6, textAlign: "center" }}>Send kindness into the void. Receive a star in return.</p>
-        {totalCount !== null && (() => {
-          const COMMUNITY_MILESTONES = [100, 250, 500, 1000, 2500, 5000, 10000];
-          const nextMilestone = COMMUNITY_MILESTONES.find(m => m > totalCount);
-          const prevMilestone = [...COMMUNITY_MILESTONES].reverse().find(m => m <= totalCount);
-          const justHit = COMMUNITY_MILESTONES.includes(totalCount);
-          return (
-            <div style={{ textAlign:"center", marginTop:4 }}>
-              {justHit ? (
-                <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,220,80,0.9)", fontSize:"0.85rem", background:"rgba(255,200,0,0.08)", border:"1px solid rgba(255,200,0,0.25)", borderRadius:10, padding:"6px 16px", display:"inline-block" }}>
-                  🎉 Together we just hit <strong>{totalCount.toLocaleString()}</strong> letters! The cosmos grows. 🌌
-                </p>
-              ) : (
-                <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.38)", fontSize:"0.78rem" }}>
-                  🌌 Together we've sent <strong style={{ color:"rgba(255,190,80,0.65)" }}>{totalCount.toLocaleString()}</strong> letters across the cosmos
-                  {nextMilestone && <span style={{ color:"rgba(255,160,60,0.25)", fontSize:"0.7rem" }}> · {(nextMilestone - totalCount).toLocaleString()} until {nextMilestone.toLocaleString()}</span>}
-                </p>
-              )}
-            </div>
-          );
-        })()}
+        <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,160,60,0.35)", fontSize: "0.78rem", textAlign: "center", marginTop: 4 }}>🌌 over 500 letters drifting through the cosmos</p>
       </div>
 
       <div style={{ margin: "32px 0", position: "relative" }}>
@@ -1274,16 +1253,6 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
         </div>
       </div>
 
-      {/* Cosmos quiet nudge */}
-      {todayCount !== null && todayCount < 10 && remaining > 0 && (
-        <div style={{ width:"100%", maxWidth:480, margin:"-4px auto 18px", background:"rgba(80,40,180,0.05)", border:"1px solid rgba(140,100,255,0.15)", borderRadius:14, padding:"11px 18px", textAlign:"center" }}>
-          <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(180,140,255,0.65)", fontSize:"0.8rem", margin:0, lineHeight:1.65 }}>
-            {todayCount === 0
-              ? "🌌 The cosmos is silent today. Be the first to send kindness into the void."
-              : `🌌 Only ${todayCount} ${todayCount === 1 ? "letter has" : "letters have"} drifted out today. Add yours.`}
-          </p>
-        </div>
-      )}
 
       {/* Daily dots — send */}
       <div style={{ display: "flex", gap: 6, alignItems: "center", marginBottom: 8 }}>
