@@ -23,14 +23,15 @@ export default async function handler(req) {
         model: "llama-3.1-8b-instant",
         max_tokens: 300,
         messages: [
-          { role: "system", content: "You write warm, heartfelt anonymous letters to strangers. Write naturally like a real human — no em dashes, no lists, no structured writing. Just genuine warmth." },
-          { role: "user", content: `Write a warm anonymous positive letter to a stranger. Theme: "${label}" — ${prompt}. Rules: 3-5 sentences, heartfelt, genuine, no names or handles, end with a fitting emoji. Write the letter only, nothing else.` }
+          { role: "system", content: "You write warm, heartfelt anonymous letters to strangers. Write naturally like a real human. NEVER use em dashes (—) or hyphens (-) to join clauses. NEVER use bullet points or lists. Use only commas, periods, and natural sentence breaks. Just genuine warmth in plain flowing sentences." },
+          { role: "user", content: `Write a warm anonymous positive letter to a stranger. Theme: "${label}" — ${prompt}. Rules: 3-5 sentences, heartfelt, genuine, no names or handles, end with a fitting emoji. Do NOT use dashes or hyphens anywhere. Write the letter only, nothing else.` }
         ],
       }),
     });
     const d = await r.json();
     if (d.error) return new Response(JSON.stringify({ text: "", error: d.error.message }), { headers: { "Content-Type": "application/json" } });
-    const text = d.choices?.[0]?.message?.content?.trim() || "";
+    const raw = d.choices?.[0]?.message?.content?.trim() || "";
+    const text = raw.replace(/—/g, ",").replace(/ - /g, ", ").replace(/–/g, ",");
     return new Response(JSON.stringify({ text }), { headers: { "Content-Type": "application/json" } });
   } catch (e) {
     return new Response(JSON.stringify({ text: "", error: e.message }), { headers: { "Content-Type": "application/json" } });
