@@ -374,7 +374,7 @@ async function fetchRandomLetter(excludeSent = [], seenReceived = []) {
 
 async function fetchLetterHearts(ids) {
   if (!ids.length) return {};
-  const r = await fetch(`${SUPABASE_URL}/rest/v1/letters?id=in.(${ids.join(",")})&select=id,hearts`, {
+  const r = await fetch(`${SUPABASE_URL}/rest/v1/letters?id=in.(${ids.join(",")})&select=id,hearts,react_love,react_moved,react_inspired,react_strong`, {
     headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
   });
   const d = await r.json(); const map = {};
@@ -382,11 +382,11 @@ async function fetchLetterHearts(ids) {
   return map;
 }
 
-async function incrementHeart(id) {
-  await fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_hearts`, {
+async function incrementReaction(id, type) {
+  await fetch(`${SUPABASE_URL}/rest/v1/rpc/increment_reaction`, {
     method: "POST",
     headers: { "Content-Type": "application/json", "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
-    body: JSON.stringify({ letter_id: id }),
+    body: JSON.stringify({ letter_id: id, reaction_type: type }),
   });
 }
 
@@ -1044,7 +1044,25 @@ function MyCapsulesScreen({ onBack, profile }) {
                 <p style={{ fontFamily: "'Georgia',serif", color: "rgba(255,220,140,0.75)", fontSize: "0.88rem", lineHeight: 1.7, margin: 0 }}>
                   {letter.message.length > 160 ? letter.message.slice(0,160)+"…" : letter.message}
                 </p>
-                {hearts > 0 && <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,160,60,0.35)", fontSize: "0.72rem", marginTop: 8, marginBottom: 0 }}>✨ Your kindness warmed {hearts} {hearts===1?"heart":"hearts"} across the cosmos</p>}
+                {(() => {
+                  const h = heartsMap[letter.id] || {};
+                  const reactions = [
+                    { emoji:"💛", count: h.react_love||0 },
+                    { emoji:"🥹", count: h.react_moved||0 },
+                    { emoji:"🌟", count: h.react_inspired||0 },
+                    { emoji:"💪", count: h.react_strong||0 },
+                  ].filter(r => r.count > 0);
+                  const total = reactions.reduce((a,r)=>a+r.count,0) + (h.hearts||0);
+                  if (total === 0) return null;
+                  return (
+                    <div style={{ marginTop:8, display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
+                      <span style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.35)", fontSize:"0.72rem" }}>✨ Your kindness reached {total} {total===1?"soul":"souls"}:</span>
+                      {reactions.map(r => (
+                        <span key={r.emoji} style={{ fontFamily:"'Georgia',serif", color:"rgba(255,200,100,0.6)", fontSize:"0.78rem" }}>{r.emoji} {r.count}</span>
+                      ))}
+                    </div>
+                  );
+                })()}
               </div>
             );
           })}
@@ -1428,11 +1446,11 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
 }
 
 // ── Receive Screen ───────────────────────────────────────────────
-function ReceiveScreen({ onBack, onWrite, sound }) {
+function ReceiveScreen({ onBack, onWrite, sound, onStart, onDone }) {
   const [stage, setStage] = useState("warp"); // warp|arriving|opening|emerging|reading
   const [warpProg, setWarpProg] = useState(0);
   const [letterData, setLetterData] = useState(null);
-  const [hearted, setHearted] = useState(false);
+  const [reaction, setReaction] = useState(null); // 'love'|'moved'|'inspired'|'strong'
   const [kept, setKept] = useState(false);
   const [copied, setCopied] = useState(false);
   const [showReport, setShowReport] = useState(false);
@@ -1443,10 +1461,11 @@ function ReceiveScreen({ onBack, onWrite, sound }) {
 
   const loadLetter = useCallback(async () => {
     if (getDailyReceiveRemaining() <= 0) return;
+    if (onStart) onStart();
     clear();
     recordReceive();
     setReceiveRemaining(getDailyReceiveRemaining());
-    setStage("warp"); setWarpProg(0); setHearted(false); setKept(false); setCopied(false); setLetterData(null);
+    setStage("warp"); setWarpProg(0); setReaction(null); setKept(false); setCopied(false); setLetterData(null);
     // Fetch while warp plays
     let data = null;
     try { data = await fetchRandomLetter(getSentIds(), getSeenReceivedIds()); }
@@ -1483,11 +1502,17 @@ function ReceiveScreen({ onBack, onWrite, sound }) {
 
   useEffect(() => { loadLetter(); return clear; }, []);
 
-  const handleHeart = async () => {
-    if (hearted) return;
-    setHearted(true); sound.heart();
+  const REACTIONS = [
+    { type: "love",     emoji: "💛", label: "This warmed me" },
+    { type: "moved",    emoji: "🥹", label: "This moved me" },
+    { type: "inspired", emoji: "🌟", label: "This inspired me" },
+    { type: "strong",   emoji: "💪", label: "This strengthened me" },
+  ];
+  const handleReact = async (type) => {
+    if (reaction) return;
+    setReaction(type); sound.heart();
     if (letterData?.id) {
-      try { await incrementHeart(letterData.id); } catch {}
+      try { await incrementReaction(letterData.id, type); } catch {}
     }
   };
   const handleKeep = () => {
@@ -1664,16 +1689,24 @@ function ReceiveScreen({ onBack, onWrite, sound }) {
             </div>
           </div>
 
-          {/* Heart + Report */}
-          <div style={{ display:"flex",gap:12,justifyContent:"center",marginBottom:8,flexWrap:"wrap" }}>
-            <button onClick={handleHeart} disabled={hearted}
-              style={{ background:hearted?"rgba(255,100,100,0.2)":"rgba(255,100,100,0.07)",border:`1px solid ${hearted?"rgba(255,100,100,0.5)":"rgba(255,100,100,0.15)"}`,borderRadius:30,padding:"11px 24px",cursor:hearted?"default":"pointer",display:"inline-flex",alignItems:"center",gap:8,transition:"all 0.3s",transform:hearted?"scale(1.05)":"scale(1)" }}>
-              <span style={{ fontSize:"1.1rem" }}>{hearted?"❤️":"🤍"}</span>
-              <span style={{ fontFamily:"'Georgia',serif",color:hearted?"rgba(255,160,140,0.95)":"rgba(255,160,120,0.5)",fontSize:"0.85rem" }}>This touched my heart</span>
-            </button>
-            <button onClick={()=>setShowReport(true)} style={{ background:"none",border:"1px solid rgba(255,255,255,0.06)",borderRadius:30,padding:"11px 18px",cursor:"pointer",color:"rgba(255,160,60,0.28)",fontFamily:"'Georgia',serif",fontSize:"0.78rem",transition:"all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color="rgba(255,80,60,0.7)"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,160,60,0.28)"}>🚩 Report</button>
+          {/* Reactions + Report */}
+          <div style={{ marginBottom:8 }}>
+            <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.45)",fontSize:"0.72rem",textAlign:"center",marginBottom:10,fontStyle:"italic",letterSpacing:"0.05em" }}>
+              {reaction ? "The sender will silently feel this. 💛" : "How did this letter make you feel?"}
+            </p>
+            <div style={{ display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",marginBottom:10 }}>
+              {REACTIONS.map(r => (
+                <button key={r.type} onClick={() => handleReact(r.type)} disabled={!!reaction}
+                  style={{ background: reaction===r.type?"rgba(255,200,80,0.2)":"rgba(255,255,255,0.04)", border:`1px solid ${reaction===r.type?"rgba(255,200,80,0.6)":"rgba(255,255,255,0.1)"}`, borderRadius:30, padding:"9px 16px", cursor:reaction?"default":"pointer", display:"inline-flex", alignItems:"center", gap:7, transition:"all 0.3s", transform:reaction===r.type?"scale(1.08)":"scale(1)", opacity: reaction && reaction!==r.type ? 0.35 : 1 }}>
+                  <span style={{ fontSize:"1.1rem" }}>{r.emoji}</span>
+                  <span style={{ fontFamily:"'Georgia',serif", color: reaction===r.type?"rgba(255,220,100,0.95)":"rgba(255,200,120,0.55)", fontSize:"0.8rem" }}>{r.label}</span>
+                </button>
+              ))}
+            </div>
+            <div style={{ display:"flex",justifyContent:"center" }}>
+              <button onClick={()=>setShowReport(true)} style={{ background:"none",border:"1px solid rgba(255,255,255,0.06)",borderRadius:30,padding:"8px 16px",cursor:"pointer",color:"rgba(255,160,60,0.28)",fontFamily:"'Georgia',serif",fontSize:"0.75rem",transition:"all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color="rgba(255,80,60,0.7)"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,160,60,0.28)"}>🚩 Report</button>
+            </div>
           </div>
-          {hearted && <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.4)",fontSize:"0.72rem",textAlign:"center",marginBottom:12 }}>The sender will silently feel this. 💛</p>}
           <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.22)",fontSize:"0.7rem",textAlign:"center",marginBottom:24 }}>Sent anonymously from somewhere in the universe.</p>
           <div style={{ display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:12 }}>
             <button onClick={handleKeep} style={{ background:kept?"rgba(255,140,20,0.15)":"rgba(255,140,20,0.07)", border:`1px solid ${kept?"rgba(255,180,60,0.6)":"rgba(255,140,20,0.2)"}`, borderRadius:30, padding:"10px 20px", cursor:kept?"default":"pointer", display:"inline-flex", alignItems:"center", gap:7, fontFamily:"'Georgia',serif", color:kept?"#ffd080":"rgba(255,200,100,0.55)", fontSize:"0.85rem", transition:"all 0.3s" }}>
@@ -1703,7 +1736,7 @@ function ReceiveScreen({ onBack, onWrite, sound }) {
 }
 
 // ── Send Animation Screen ────────────────────────────────────────
-function SendAnimScreen({ colorId, accessoryId, onDone, sound, milestone, showConfetti }) {
+function SendAnimScreen({ colorId, accessoryId, onDone, sound, milestone, showConfetti, onStart }) {
   // stages: paper → folding → loading → sealing → launching → warping → done
   const [stage, setStage] = useState("paper");
   const [warpProg, setWarpProg] = useState(0);
@@ -1716,6 +1749,7 @@ function SendAnimScreen({ colorId, accessoryId, onDone, sound, milestone, showCo
   }))).current;
 
   useEffect(() => {
+    if (onStart) onStart();
     // Stage 1: paper floats (user sees it immediately)
     setStage("paper");
     addT(() => sound.paperRustle(), 150);
@@ -1851,15 +1885,143 @@ function SendAnimScreen({ colorId, accessoryId, onDone, sound, milestone, showCo
   );
 }
 
+// ── Ambient Music ────────────────────────────────────────────────
+
+// ── Ambient Music ────────────────────────────────────────────────
+function createAmbientMusic() {
+  const ctx = new (window.AudioContext || window.webkitAudioContext)();
+  const master = ctx.createGain();
+  master.gain.setValueAtTime(0, ctx.currentTime);
+  master.gain.linearRampToValueAtTime(0.09, ctx.currentTime + 3);
+  master.connect(ctx.destination);
+
+  // Simple gentle melody — like a soft music box
+  const melody = [523.25, 659.25, 783.99, 880, 783.99, 659.25, 523.25, 587.33];
+  const noteDur = 1.8;
+  let chimeTimer;
+
+  const playNote = (index) => {
+    const freq = melody[index % melody.length];
+    const o = ctx.createOscillator();
+    const g = ctx.createGain();
+    const filter = ctx.createBiquadFilter();
+    filter.type = "lowpass";
+    filter.frequency.value = 1200;
+    o.type = "sine";
+    o.frequency.value = freq;
+    g.gain.setValueAtTime(0, ctx.currentTime);
+    g.gain.linearRampToValueAtTime(0.08, ctx.currentTime + 0.08);
+    g.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + noteDur);
+    o.connect(filter); filter.connect(g); g.connect(master);
+    o.start(); o.stop(ctx.currentTime + noteDur + 0.1);
+    chimeTimer = setTimeout(() => playNote(index + 1), noteDur * 900);
+  };
+
+  setTimeout(() => playNote(0), 1200);
+
+  return {
+    fadeOut: () => {
+      clearTimeout(chimeTimer);
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 2);
+      setTimeout(() => { try { ctx.close(); } catch(e){} }, 2500);
+    },
+    pause: () => {
+      master.gain.linearRampToValueAtTime(0, ctx.currentTime + 1.5);
+    },
+    resume: () => {
+      master.gain.linearRampToValueAtTime(0.09, ctx.currentTime + 1.5);
+    },
+  };
+}
+
+// ── Splash Screen ─────────────────────────────────────────────────
+function SplashScreen({ onEnter }) {
+  const [phase, setPhase] = useState(0);
+  const stars = useRef(Array.from({ length: 120 }, (_, i) => ({
+    x: (i * 137.5) % 100, y: (i * 97.3) % 100,
+    size: (i % 3) + 0.5, dur: 1.5 + (i % 4),
+    delay: (i % 5) * 0.4, opacity: 0.1 + (i % 5) * 0.08,
+  }))).current;
+  const streaks = useRef(Array.from({ length: 40 }, () => ({
+    x: Math.random() * 100, len: 4 + Math.random() * 12,
+    dur: 1.5 + Math.random() * 2, delay: Math.random() * 3,
+    opacity: 0.2 + Math.random() * 0.4,
+  }))).current;
+
+  useEffect(() => {
+    const t1 = setTimeout(() => setPhase(1), 800);
+    const t2 = setTimeout(() => setPhase(2), 2200);
+    const t3 = setTimeout(() => setPhase(3), 3600);
+    const t4 = setTimeout(() => setPhase(4), 5000);
+    return () => [t1,t2,t3,t4].forEach(clearTimeout);
+  }, []);
+
+  const handleEnter = () => onEnter();
+
+  return (
+    <div style={{ position:"fixed", inset:0, zIndex:999, background:"#030100", display:"flex", flexDirection:"column", alignItems:"center", justifyContent:"center", overflow:"hidden" }}>
+      {/* Stars */}
+      {stars.map((s,i) => (
+        <div key={i} style={{ position:"absolute", left:`${s.x}%`, top:`${s.y}%`, width:s.size, height:s.size, borderRadius:"50%", background:`rgba(255,200,120,${s.opacity})`, animation:`twinkle ${s.dur}s ease-in-out infinite`, animationDelay:`${s.delay}s` }} />
+      ))}
+      {/* Streaking stars */}
+      {streaks.map((s,i) => (
+        <div key={i} style={{ position:"absolute", left:`${s.x}%`, top:"-10%", width:"1px", height:`${s.len}vh`, background:`linear-gradient(to bottom, transparent, rgba(255,200,120,${s.opacity}))`, animation:`splashStreak ${s.dur}s linear infinite`, animationDelay:`${s.delay}s` }} />
+      ))}
+      {/* Nebula glow */}
+      <div style={{ position:"absolute", inset:0, background:"radial-gradient(ellipse at 50% 60%, rgba(180,80,0,0.18) 0%, transparent 65%), radial-gradient(ellipse at 30% 30%, rgba(100,40,0,0.1) 0%, transparent 50%)", pointerEvents:"none" }} />
+
+      {/* Floating capsule */}
+      <div style={{ marginBottom:48, animation:"capsuleFloat 4s ease-in-out infinite", filter:"drop-shadow(0 0 30px rgba(255,140,20,0.8))", opacity: phase >= 1 ? 1 : 0, transition:"opacity 1.2s ease" }}>
+        <CapsuleSVG colorId="amber" size={88} glowing />
+      </div>
+
+      {/* Text lines */}
+      <div style={{ textAlign:"center", padding:"0 32px", maxWidth:440 }}>
+        <p style={{ fontFamily:"'Georgia',serif", fontSize:"clamp(1.15rem,4vw,1.45rem)", color:"rgba(255,220,140,0.93)", marginBottom:18, lineHeight:1.6, opacity: phase >= 1 ? 1 : 0, transform: phase >= 1 ? "translateY(0)" : "translateY(22px)", transition:"opacity 1.2s ease, transform 1.2s ease" }}>
+          Somewhere out there…
+        </p>
+        <p style={{ fontFamily:"'Georgia',serif", fontSize:"clamp(1.15rem,4vw,1.45rem)", color:"rgba(255,220,140,0.93)", marginBottom:18, lineHeight:1.6, opacity: phase >= 2 ? 1 : 0, transform: phase >= 2 ? "translateY(0)" : "translateY(22px)", transition:"opacity 1.2s ease, transform 1.2s ease" }}>
+          …a stranger needs your words today.
+        </p>
+        <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", fontSize:"clamp(0.88rem,3vw,1.02rem)", color:"rgba(255,180,80,0.58)", marginBottom:44, lineHeight:1.9, opacity: phase >= 3 ? 1 : 0, transform: phase >= 3 ? "translateY(0)" : "translateY(22px)", transition:"opacity 1.2s ease, transform 1.2s ease" }}>
+          Send a letter of kindness. Stay anonymous.<br/>Let it drift to whoever needs it most.
+        </p>
+        <div style={{ opacity: phase >= 4 ? 1 : 0, transform: phase >= 4 ? "translateY(0) scale(1)" : "translateY(22px) scale(0.95)", transition:"opacity 0.9s ease, transform 0.9s ease" }}>
+          <button onClick={handleEnter}
+            style={{ padding:"16px 52px", borderRadius:50, border:"none", background:"linear-gradient(135deg,#ffa520,#e06000)", color:"#1a0800", fontFamily:"'Georgia',serif", fontWeight:700, fontSize:"1.08rem", letterSpacing:"0.08em", cursor:"pointer", boxShadow:"0 0 36px rgba(255,140,0,0.65), 0 4px 24px rgba(0,0,0,0.5)", animation:"pulseGlow 2s ease-in-out infinite" }}>
+            Enter the Cosmos ✨
+          </button>
+          <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.3)", fontSize:"0.72rem", marginTop:16 }}>Free · Anonymous · No account needed</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
 // ── App Root ─────────────────────────────────────────────────────
 export default function CosmicCapsule() {
   const [screen, setScreen] = useState("home");
+  const [showSplash, setShowSplash] = useState(true);
+  const bgMusicRef = useRef(null);
+
+  const handleEnterCosmos = () => {
+    setShowSplash(false);
+    // Start background music after user gesture (required by browsers)
+    try { bgMusicRef.current = createAmbientMusic(); } catch(e) {}
+  };
+
   const [profile, setProfile] = useState(getProfile());
   const [pendingColorId, setPendingColorId] = useState("amber");
   const [pendingAccId, setPendingAccId] = useState("none");
   const soundRef = useRef(null);
 
   useEffect(() => { soundRef.current = createSoundEngine(); }, []);
+
+  const pauseBgMusic = () => { try { bgMusicRef.current?.pause(); } catch(e) {} };
+  const resumeBgMusic = () => { try { bgMusicRef.current?.resume(); } catch(e) {} };
+
   const sound = {
     paperRustle: () => profile.soundOn !== false && soundRef.current?.paperRustle(),
     capsuleLoad:  () => profile.soundOn !== false && soundRef.current?.capsuleLoad(),
@@ -1902,17 +2064,20 @@ export default function CosmicCapsule() {
         @keyframes boltFlash{0%,100%{opacity:0.2}50%{opacity:1}}
         @keyframes ribbonWave{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
         @keyframes novaRotate{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
+        @keyframes splashStreak{0%{transform:translateY(-10vh);opacity:0}10%{opacity:1}90%{opacity:0.6}100%{transform:translateY(110vh);opacity:0}}
+        @keyframes splashFadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
         textarea::placeholder{color:rgba(255,160,60,0.28);}
         textarea::-webkit-scrollbar{width:3px;}
         textarea::-webkit-scrollbar-thumb{background:rgba(255,140,20,0.28);border-radius:2px;}
         button:focus{outline:none;}
       `}</style>
+      {showSplash && <SplashScreen onEnter={handleEnterCosmos} />}
       <Nebula />
       <StarField />
       {screen === "home"       && <HomeScreen onWrite={()=>setScreen("write")} onReceive={()=>setScreen("receive")} onMyCapsules={()=>setScreen("mycapsules")} onMyReceived={()=>setScreen("myreceived")} onGuidelines={()=>setScreen("guidelines")} onFAQ={()=>setScreen("faq")} profile={profile} setProfile={setProfile} sound={sound} />}
       {screen === "write"      && <WriteScreen onBack={()=>setScreen("home")} onSent={p=>{setPendingColorId(p.colorId||"amber");setPendingAccId(p.accessoryId||"none");setProfile({...p});setScreen("sendanim");}} profile={profile} sound={sound} />}
-      {screen === "sendanim"   && <SendAnimScreen colorId={pendingColorId} accessoryId={pendingAccId} onDone={()=>setScreen("home")} sound={sound} />}
-      {screen === "receive"    && <ReceiveScreen onBack={()=>setScreen("home")} onWrite={()=>setScreen("write")} sound={sound} />}
+      {screen === "sendanim"   && <SendAnimScreen colorId={pendingColorId} accessoryId={pendingAccId} onDone={()=>{ resumeBgMusic(); setScreen("home"); }} sound={sound} onStart={pauseBgMusic} />}
+      {screen === "receive"    && <ReceiveScreen onBack={()=>{ resumeBgMusic(); setScreen("home"); }} onWrite={()=>setScreen("write")} sound={sound} onStart={pauseBgMusic} onDone={resumeBgMusic} />}
       {screen === "mycapsules" && <MyCapsulesScreen onBack={()=>setScreen("home")} profile={profile} />}
       {screen === "myreceived"  && <MyReceivedScreen onBack={()=>setScreen("home")} />}
       {screen === "guidelines" && <GuidelinesScreen onBack={()=>setScreen("home")} />}
