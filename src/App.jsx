@@ -305,8 +305,14 @@ function clientSideCheck(msg) {
   const digitsOnly = msg.replace(/[^0-9]/g, "");
   if (digitsOnly.length >= 7 && /(\d[\s\-.]?){7,}/.test(msg))
     return { approved: false, reason: "Please don't include phone numbers — keep it anonymous. 💛" };
-  // Name signatures at the end: "- Sarah", "Love, John", "From: Mike", "Yours, Ana"
-  if (/(^|\s)(from[:\s]+|love[,\s]+|yours[,\s]+|signed[,\s]+|[-–]\s*)[A-Z][a-z]{1,20}\s*$/.test(msg.trim()))
+  // Name signatures at the end: "- Sarah", "Love, John", "From: Mike", "Best, Jane", "Warmly, Ana"
+  // Check for name signatures — handles multiline e.g. "Yours,\nLiam"
+  const cleanMsg = msg.trim();
+  const signaturePattern = /(yours|love|from|signed|best|warmly|sincerely|cheers|regards|xo|hugs)[,:\s]+[A-Z][a-z]{1,20}\s*$/i;
+  const multilinePattern = /(yours|love|from|signed|best|warmly|sincerely|cheers|regards|xo|hugs)[,\s]*[\n\r]+\s*[A-Z][a-z]{1,20}\s*$/i;
+  const dashPattern = /[-–]\s*[A-Z][a-z]{1,20}\s*$/;
+  const standaloneNamePattern = /[\n\r]\s*[A-Z][a-z]{1,15}\s*$/;
+  if (signaturePattern.test(cleanMsg) || multilinePattern.test(cleanMsg) || dashPattern.test(cleanMsg) || standaloneNamePattern.test(cleanMsg))
     return { approved: false, reason: "Please don't sign your name — part of the magic is the mystery. 💛" };
   return null;
 }
@@ -364,10 +370,6 @@ async function fetchRandomLetter(excludeSent = [], seenReceived = []) {
   return unseen.length > 0
     ? unseen[Math.floor(Math.random() * unseen.length)]
     : pool[Math.floor(Math.random() * pool.length)]; // full cycle reset
-}
-
-    headers: { "apikey": SUPABASE_ANON_KEY, "Authorization": `Bearer ${SUPABASE_ANON_KEY}` },
-  });
 }
 
 async function fetchLetterHearts(ids) {
@@ -1091,7 +1093,7 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
       {/* Top bar */}
       <div style={{ position: "fixed", top: 0, left: 0, right: 0, zIndex: 10, display: "flex", justifyContent: "space-between", alignItems: "center", padding: "12px 16px", background: "rgba(10,5,0,0.7)", backdropFilter: "blur(8px)" }}>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
-          {profile.streak > 0 && <div style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.7)", fontSize: "0.78rem", background: "rgba(255,140,20,0.1)", border: "1px solid rgba(255,140,20,0.2)", borderRadius: 20, padding: "4px 10px" }}>🔥 {profile.streak} day streak</div>}
+          
         </div>
         <div style={{ display: "flex", gap: 10, alignItems: "center" }}>
           <button onClick={() => { const p = getProfile(); p.soundOn = !p.soundOn; saveProfile(p); setProfile({...p}); }} style={{ background: "none", border: "none", color: "rgba(255,160,60,0.5)", fontSize: "1rem", cursor: "pointer" }}>{profile.soundOn !== false ? "🔊" : "🔇"}</button>
@@ -1449,18 +1451,14 @@ function ReceiveScreen({ onBack, onWrite, sound }) {
     let data = null;
     try { data = await fetchRandomLetter(getSentIds(), getSeenReceivedIds()); }
     catch { data = null; }
-    // If no letters available, refund the receive count and show empty state
+    // If no letters in DB, use a fallback letter
     if (!data) {
-      // Refund — don't penalise for an empty cosmos
-      const p = getProfile();
-      p.receiveCount = Math.max(0, (p.receiveCount || 1) - 1);
-      saveProfile(p);
-      setReceiveRemaining(getDailyReceiveRemaining());
-      setStage("empty");
-      return;
+      const idx = getUnseenFallback();
+      data = FALLBACK_LETTERS[idx];
+      markFallbackSeen(idx);
     }
-    // Warp progress
-    sound.warpHum();
+    // Warp progress — small delay so AudioContext can start after user gesture
+    timers.current.push(setTimeout(() => sound.warpHum(), 100));
     for (let i = 1; i <= 3; i++) {
       timers.current.push(setTimeout(() => setWarpProg(i), i * 1000));
     }
