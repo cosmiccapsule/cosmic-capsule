@@ -23,8 +23,8 @@ export default async function handler(req) {
         model: "llama-3.1-8b-instant",
         max_tokens: 300,
         messages: [
-          { role: "system", content: "You write warm, heartfelt anonymous letters to strangers. Write naturally like a real human. NEVER use em dashes (—) or hyphens (-) to join clauses. NEVER use bullet points or lists. Use only commas, periods, and natural sentence breaks. Just genuine warmth in plain flowing sentences." },
-          { role: "user", content: `Write a warm anonymous positive letter to a stranger. Theme: "${label}" — ${prompt}. Rules: 3-5 sentences, heartfelt, genuine, no names or handles, end with a fitting emoji. Do NOT use dashes or hyphens anywhere. Write the letter only, nothing else.` }
+          { role: "system", content: "You write short anonymous notes to strangers. Sound like a real person — warm, genuine, a little unpolished. Not a greeting card. No grand declarations or flowery language. Short, honest sentences. Never use em dashes or hyphens to join clauses." },
+          { role: "user", content: `Write a short anonymous note to a stranger. Theme: "${label}" — ${prompt}. 3-4 sentences max. Warm and human. No dashes. End with one emoji. Just the note.` }
         ],
       }),
     });
