@@ -734,7 +734,7 @@ function WarpScreen({ progress, receive }) {
             <div key={i} style={{ width: 9, height: 9, borderRadius: "50%", background: i < progress ? "#ffa520" : "rgba(255,140,20,0.2)", boxShadow: i < progress ? "0 0 10px rgba(255,140,20,0.8)" : "none", transition: "all 0.4s ease" }} />
           ))}
         </div>
-        <p style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.35)", fontSize: "0.72rem", marginTop: 8, fontStyle: "italic" }}>{3 - progress} light-years remaining</p>
+        <p style={{ fontFamily: "'Georgia',serif", color: "rgba(255,180,80,0.58)", fontSize: "0.72rem", marginTop: 8, fontStyle: "italic" }}>{3 - progress} light-years remaining</p>
       </div>
     </div>
   );
@@ -1002,7 +1002,7 @@ function FAQScreen({ onBack, profile }) {
           </div>
         </div>
 
-        <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.28)", fontSize:"0.72rem", textAlign:"center" }}>Cosmic Capsule · purely anonymous · purely kind 💛</p>
+        <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,180,80,0.55)", fontSize:"0.72rem", textAlign:"center" }}>Cosmic Capsule · purely anonymous · purely kind 💛</p>
       </div>
     </div>
   );
@@ -1077,7 +1077,7 @@ function MyCapsulesScreen({ onBack, profile }) {
           <div style={{ flex: 1 }}>
             <div style={{ fontFamily: "'Georgia',serif", color: rank.color, fontSize: "1.1rem", fontWeight: 700 }}>{rank.name}</div>
             <div style={{ fontFamily: "'Georgia',serif", color: "rgba(255,200,100,0.5)", fontSize: "0.78rem", marginTop: 2 }}>{profile.sent || 0} letters sent · {profile.streak || 0} day streak 🔥</div>
-            {next && <div style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.35)", fontSize: "0.7rem", marginTop: 4, fontStyle: "italic" }}>{next.min - (profile.sent||0)} more to reach {next.name} {next.icon}</div>}
+            {next && <div style={{ fontFamily: "'Georgia',serif", color: "rgba(255,180,80,0.58)", fontSize: "0.7rem", marginTop: 4, fontStyle: "italic" }}>{next.min - (profile.sent||0)} more to reach {next.name} {next.icon}</div>}
           </div>
           <div style={{ textAlign: "right" }}>
             <div style={{ fontFamily: "'Georgia',serif", color: "rgba(255,160,60,0.4)", fontSize: "0.7rem", marginBottom: 4 }}>Total hearts</div>
@@ -1142,7 +1142,7 @@ function MyCapsulesScreen({ onBack, profile }) {
                   if (total === 0) return null;
                   return (
                     <div style={{ marginTop:8, display:"flex", gap:8, alignItems:"center", flexWrap:"wrap" }}>
-                      <span style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.35)", fontSize:"0.72rem" }}>✨ Your kindness reached {total} {total===1?"soul":"souls"}:</span>
+                      <span style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,180,80,0.58)", fontSize:"0.72rem" }}>✨ Your kindness reached {total} {total===1?"soul":"souls"}:</span>
                       {reactions.map(r => (
                         <span key={r.emoji} style={{ fontFamily:"'Georgia',serif", color:"rgba(255,200,100,0.6)", fontSize:"0.78rem" }}>{r.emoji} {r.count}</span>
                       ))}
@@ -1219,7 +1219,7 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
             <span style={{ fontSize: "1rem" }}>{rank.icon}</span>
             <div>
               <div style={{ fontFamily: "'Georgia',serif", color: rank.color, fontSize: "0.72rem", fontWeight: 700 }}>{rank.name}</div>
-              <div style={{ fontFamily: "'Georgia',serif", color: "rgba(255,200,100,0.35)", fontSize: "0.6rem" }}>{profile.sent||0} sent</div>
+              <div style={{ fontFamily: "'Georgia',serif", color: "rgba(255,200,100,0.55)", fontSize: "0.6rem" }}>{profile.sent||0} sent</div>
             </div>
           </div>
         </div>
@@ -1229,7 +1229,7 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
         <p style={{ fontFamily: "'Georgia',serif", fontSize: "0.75rem", letterSpacing: "0.3em", color: "rgba(255,160,60,0.55)", textTransform: "uppercase", marginBottom: 10, textAlign: "center" }}>A message across the universe</p>
         <h1 style={{ fontFamily: "'Georgia',serif", fontSize: "clamp(2rem,6vw,3.2rem)", fontWeight: 400, color: "transparent", background: "linear-gradient(135deg,#ffd080,#ff8c00,#ffb830)", WebkitBackgroundClip: "text", backgroundClip: "text", textAlign: "center", marginBottom: 8, lineHeight: 1.2 }}>Cosmic Capsule</h1>
         <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,200,100,0.45)", fontSize: "0.95rem", marginBottom: 6, textAlign: "center" }}>Send kindness into the void. Receive a star in return.</p>
-        <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,160,60,0.35)", fontSize: "0.78rem", textAlign: "center", marginTop: 4 }}>🌌 over 500 letters drifting through the cosmos</p>
+        <p style={{ fontFamily: "'Georgia',serif", fontStyle: "italic", color: "rgba(255,180,80,0.58)", fontSize: "0.78rem", textAlign: "center", marginTop: 4 }}>🌌 over 500 letters drifting through the cosmos</p>
       </div>
 
       <div style={{ margin: "32px 0", position: "relative" }}>
@@ -1268,12 +1268,12 @@ function HomeScreen({ onWrite, onReceive, onMyCapsules, onMyReceived, onGuidelin
       </div>
 
       <div style={{ display: "flex", gap: 14, marginTop: 24, flexWrap: "wrap", justifyContent: "center" }}>
-        <button onClick={shareRank} style={{ background: "none", border: "none", color: "rgba(255,160,60,0.38)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,160,60,0.38)"}>📸 Share my rank</button>
-        <button onClick={shareApp} style={{ background: "none", border: "none", color: "rgba(255,160,60,0.38)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,160,60,0.38)"}>🔗 Share the app</button>
+        <button onClick={shareRank} style={{ background: "none", border: "none", color: "rgba(255,180,80,0.62)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,180,80,0.62)"}>📸 Share my rank</button>
+        <button onClick={shareApp} style={{ background: "none", border: "none", color: "rgba(255,180,80,0.62)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,180,80,0.62)"}>🔗 Share the app</button>
         
-        <button onClick={() => setShowTip(true)} style={{ background: "none", border: "none", color: "rgba(255,160,60,0.38)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,160,60,0.38)"}>☕ Support the cosmos</button>
-        <button onClick={onGuidelines} style={{ background: "none", border: "none", color: "rgba(255,160,60,0.38)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,160,60,0.38)"}>📋 Community guidelines</button>
-        <button onClick={onFAQ} style={{ background: "none", border: "none", color: "rgba(255,160,60,0.38)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,160,60,0.38)"}>💬 FAQ</button>
+        <button onClick={() => setShowTip(true)} style={{ background: "none", border: "none", color: "rgba(255,180,80,0.62)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,180,80,0.62)"}>☕ Support the cosmos</button>
+        <button onClick={onGuidelines} style={{ background: "none", border: "none", color: "rgba(255,180,80,0.62)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,180,80,0.62)"}>📋 Community guidelines</button>
+        <button onClick={onFAQ} style={{ background: "none", border: "none", color: "rgba(255,180,80,0.62)", fontFamily: "'Georgia',serif", fontSize: "0.75rem", cursor: "pointer", fontStyle: "italic" }} onMouseEnter={e=>e.target.style.color="rgba(255,160,60,0.7)"} onMouseLeave={e=>e.target.style.color="rgba(255,180,80,0.62)"}>💬 FAQ</button>
       </div>
     </div>
   );
@@ -1349,7 +1349,7 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
       {rankUp && <div style={{ background:"rgba(255,200,0,0.1)",border:"1px solid rgba(255,200,0,0.35)",borderRadius:14,padding:"10px 22px",marginBottom:12 }}><p style={{ fontFamily:"'Georgia',serif",color:"#ffd080",fontSize:"0.95rem",margin:0 }}>🎉 Rank Up! You're now <strong>{newRank.name} {newRank.icon}</strong></p></div>}
       <h2 style={{ fontFamily:"'Georgia',serif",fontWeight:400,fontSize:"1.7rem",color:"#ffd080",marginTop:20,marginBottom:10 }}>Launched into the cosmos 🌌</h2>
       <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,200,100,0.55)",fontSize:"0.92rem",maxWidth:320,marginBottom:10,lineHeight:1.7 }}>Somewhere out there, a stranger will intercept your kindness.</p>
-      <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,160,60,0.35)",fontSize:"0.78rem",marginBottom:28,fontStyle:"italic" }}>
+      <p style={{ fontFamily:"'Georgia',serif",color:"rgba(255,180,80,0.58)",fontSize:"0.78rem",marginBottom:28,fontStyle:"italic" }}>
         Write as many as you like. Every letter matters. 💛
       </p>
       <Btn onClick={onBack}>Return to Base</Btn>
@@ -1399,7 +1399,7 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
           <p style={{ fontFamily:"'Kalam',cursive",fontSize:"1.25rem",fontWeight:700,lineHeight:1.85,color:"rgba(60,35,5,0.88)",margin:0,whiteSpace:"pre-wrap",position:"relative",zIndex:1,marginTop:subject.trim()?16:0 }}>{text}</p>
         </div>
       </div>
-      <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.28)",fontSize:"0.72rem",marginBottom:20,textAlign:"center" }}>Sent anonymously from somewhere in the universe.</p>
+      <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,180,80,0.55)",fontSize:"0.72rem",marginBottom:20,textAlign:"center" }}>Sent anonymously from somewhere in the universe.</p>
       <div style={{ display:"flex",gap:14,flexWrap:"wrap",justifyContent:"center" }}>
         <Btn onClick={()=>setStatus("idle")} secondary>✏️ Edit</Btn>
         <Btn onClick={handleSend}>🚀 Launch Capsule</Btn>
@@ -1439,7 +1439,7 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
           placeholder="Dear stranger across the stars…" rows={6}
           style={{ width:"100%",background:"transparent",border:"none",outline:"none",resize:"none",color:"rgba(255,220,140,0.9)",padding:"16px 18px",fontFamily:"'Kalam',cursive",fontSize:"1.2rem",fontWeight:700,lineHeight:1.7,caretColor:"#ffa520",boxSizing:"border-box" }} />
       </div>
-      <div style={{ width:"100%",maxWidth:520,display:"flex",justifyContent:"space-between",marginTop:7,marginBottom:6,color:"rgba(255,160,60,0.38)",fontFamily:"'Georgia',serif",fontSize:"0.75rem" }}>
+      <div style={{ width:"100%",maxWidth:520,display:"flex",justifyContent:"space-between",marginTop:7,marginBottom:6,color:"rgba(255,190,90,0.65)",fontFamily:"'Georgia',serif",fontSize:"0.75rem" }}>
         <span>{text.length<10?"Write at least 10 characters":"✓ Ready to preview"}</span>
         <span>{text.length}/{maxLen}</span>
       </div>
@@ -1722,10 +1722,10 @@ function ReceiveScreen({ onBack, onWrite, sound, onStart, onDone }) {
               ))}
             </div>
             <div style={{ display:"flex",justifyContent:"center" }}>
-              <button onClick={()=>setShowReport(true)} style={{ background:"none",border:"1px solid rgba(255,255,255,0.06)",borderRadius:30,padding:"8px 16px",cursor:"pointer",color:"rgba(255,160,60,0.28)",fontFamily:"'Georgia',serif",fontSize:"0.75rem",transition:"all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color="rgba(255,80,60,0.7)"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,160,60,0.28)"}>🚩 Report</button>
+              <button onClick={()=>setShowReport(true)} style={{ background:"none",border:"1px solid rgba(255,255,255,0.06)",borderRadius:30,padding:"8px 16px",cursor:"pointer",color:"rgba(255,180,80,0.55)",fontFamily:"'Georgia',serif",fontSize:"0.75rem",transition:"all 0.2s" }} onMouseEnter={e=>e.currentTarget.style.color="rgba(255,80,60,0.7)"} onMouseLeave={e=>e.currentTarget.style.color="rgba(255,180,80,0.55)"}>🚩 Report</button>
             </div>
           </div>
-          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,160,60,0.22)",fontSize:"0.7rem",textAlign:"center",marginBottom:24 }}>Sent anonymously from somewhere in the universe.</p>
+          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,180,80,0.50)",fontSize:"0.7rem",textAlign:"center",marginBottom:24 }}>Sent anonymously from somewhere in the universe.</p>
           <div style={{ display:"flex",gap:10,justifyContent:"center",flexWrap:"wrap",marginBottom:12 }}>
             <button onClick={handleKeep} style={{ background:kept?"rgba(255,140,20,0.15)":"rgba(255,140,20,0.07)", border:`1px solid ${kept?"rgba(255,180,60,0.6)":"rgba(255,140,20,0.2)"}`, borderRadius:30, padding:"10px 20px", cursor:kept?"default":"pointer", display:"inline-flex", alignItems:"center", gap:7, fontFamily:"'Georgia',serif", color:kept?"#ffd080":"rgba(255,200,100,0.55)", fontSize:"0.85rem", transition:"all 0.3s" }}>
               {kept ? "✦ Kept in my collection" : "🗂 Keep this letter"}
@@ -2010,7 +2010,16 @@ function SplashScreen({ onEnter }) {
             style={{ padding:"16px 52px", borderRadius:50, border:"none", background:"linear-gradient(135deg,#ffa520,#e06000)", color:"#1a0800", fontFamily:"'Georgia',serif", fontWeight:700, fontSize:"1.08rem", letterSpacing:"0.08em", cursor:"pointer", boxShadow:"0 0 36px rgba(255,140,0,0.65), 0 4px 24px rgba(0,0,0,0.5)", animation:"pulseGlow 2s ease-in-out infinite" }}>
             Enter the Cosmos ✨
           </button>
-          <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.3)", fontSize:"0.72rem", marginTop:16 }}>Free · Anonymous · No account needed</p>
+          <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(255,160,60,0.3)", fontSize:"0.72rem", marginTop:16 }}>Anonymous · No account needed</p>
+          <p style={{ fontFamily:"'Georgia',serif", color:"rgba(255,180,80,0.42)", fontSize:"0.76rem", marginTop:14, lineHeight:1.7 }}>
+            First time here? We recommend reading the{" "}
+            <span
+              onClick={() => { onEnter(); setTimeout(() => window.dispatchEvent(new CustomEvent("openGuidelines")), 400); }}
+              style={{ color:"rgba(255,200,100,0.7)", textDecoration:"underline", textDecorationColor:"rgba(255,200,100,0.3)", cursor:"pointer" }}>
+              community guidelines
+            </span>
+            {" "}before writing. 💛
+          </p>
         </div>
       </div>
     </div>
@@ -2039,6 +2048,11 @@ export default function CosmicCapsule() {
   const soundRef = useRef(null);
 
   useEffect(() => { soundRef.current = createSoundEngine(); }, []);
+  useEffect(() => {
+    const handler = () => setScreen("guidelines");
+    window.addEventListener("openGuidelines", handler);
+    return () => window.removeEventListener("openGuidelines", handler);
+  }, []);
 
 
   const sound = {
@@ -2085,7 +2099,7 @@ export default function CosmicCapsule() {
         @keyframes novaRotate{from{transform:translate(-50%,-50%) rotate(0deg)}to{transform:translate(-50%,-50%) rotate(360deg)}}
         @keyframes splashStreak{0%{transform:translateY(-10vh);opacity:0}10%{opacity:1}90%{opacity:0.6}100%{transform:translateY(110vh);opacity:0}}
         @keyframes splashFadeIn{from{opacity:0;transform:translateY(18px)}to{opacity:1;transform:translateY(0)}}
-        textarea::placeholder{color:rgba(255,160,60,0.28);}
+        textarea::placeholder{color:rgba(255,180,80,0.45);}
         textarea::-webkit-scrollbar{width:3px;}
         textarea::-webkit-scrollbar-thumb{background:rgba(255,140,20,0.28);border-radius:2px;}
         button:focus{outline:none;}
