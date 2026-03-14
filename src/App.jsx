@@ -840,6 +840,7 @@ function MyReceivedScreen({ onBack }) {
           {letters.map((letter, i) => {
             const savedAgo = Math.floor((Date.now() - new Date(letter.savedAt).getTime()) / 86400000);
             const savedStr = savedAgo === 0 ? "Today" : savedAgo === 1 ? "Yesterday" : `${savedAgo} days ago`;
+            const writtenStr = letter.created_at ? new Date(letter.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"}) : null;
             return (
               <div key={i} style={{ position:"relative", background:"linear-gradient(160deg,#fffdf0,#fff8dc,#fff3c8)", borderRadius:16, padding:"32px 30px 38px", border:"1px solid rgba(255,200,100,0.3)", boxShadow:"0 4px 30px rgba(0,0,0,0.25), 0 0 40px rgba(255,160,40,0.08)" }}>
                 {/* Fold corner */}
@@ -858,7 +859,7 @@ function MyReceivedScreen({ onBack }) {
                 <p style={{ fontFamily:"'Kalam',cursive", fontWeight:700, fontSize:"1.15rem", lineHeight:1.9, color:"rgba(60,35,5,0.88)", margin:0, whiteSpace:"pre-wrap", marginTop:letter.theme?18:0 }}>{letter.message}</p>
                 {/* Footer */}
                 <div style={{ display:"flex", justifyContent:"space-between", alignItems:"center", marginTop:16 }}>
-                  <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(160,110,30,0.45)", fontSize:"0.7rem", margin:0 }}>Kept {savedStr} · sent anonymously from somewhere in the universe</p>
+                  <p style={{ fontFamily:"'Georgia',serif", fontStyle:"italic", color:"rgba(160,110,30,0.45)", fontSize:"0.7rem", margin:0 }}>{writtenStr ? `${writtenStr} · ` : ""}Kept {savedStr} · sent anonymously from somewhere in the universe</p>
                   <button onClick={() => handleDelete(i)}
                     style={{ background:"none", border:"1px solid rgba(200,80,60,0.2)", borderRadius:20, padding:"4px 12px", cursor:"pointer", color:"rgba(200,80,60,0.4)", fontFamily:"'Georgia',serif", fontSize:"0.7rem", transition:"all 0.2s", flexShrink:0, marginLeft:12 }}
                     onMouseEnter={e => { e.currentTarget.style.color="rgba(220,80,60,0.8)"; e.currentTarget.style.borderColor="rgba(220,80,60,0.5)"; }}
@@ -1102,8 +1103,7 @@ function MyCapsulesScreen({ onBack, profile }) {
             const col = COLORS.find(c => c.id === letter.colorId) || COLORS[0];
             const hearts = letter.id ? (heartsMap[letter.id] ?? letter.hearts ?? 0) : 0;
             const theme = THEMES.find(t => t.id === letter.theme) || THEMES[0];
-            const daysAgo = Math.floor((Date.now() - new Date(letter.sentAt).getTime()) / 86400000);
-            const dateStr = daysAgo === 0 ? "Today" : daysAgo === 1 ? "Yesterday" : `${daysAgo} days ago`;
+            const dateStr = new Date(letter.sentAt).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"});
             return (
               <div key={i} style={{ background: "rgba(255,140,20,0.05)", border: `1px solid ${col.glow.replace("0.9","0.2")}`, borderRadius: 16, padding: "18px 22px", position: "relative", overflow: "hidden" }}>
                 <div style={{ position: "absolute", top: -20, right: -20, width: 100, height: 100, borderRadius: "50%", background: `radial-gradient(circle, ${col.glow.replace("0.9","0.1")}, transparent 70%)` }} />
@@ -1397,6 +1397,10 @@ function WriteScreen({ onBack, onSent, profile, sound }) {
           )}
           {/* Letter text */}
           <p style={{ fontFamily:"'Kalam',cursive",fontSize:"1.25rem",fontWeight:700,lineHeight:1.85,color:"rgba(60,35,5,0.88)",margin:0,whiteSpace:"pre-wrap",position:"relative",zIndex:1,marginTop:subject.trim()?16:0 }}>{text}</p>
+          {/* Date postmark */}
+          <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",fontSize:"0.68rem",color:"rgba(160,110,30,0.45)",marginTop:18,marginBottom:0,textAlign:"right",letterSpacing:"0.04em" }}>
+            {new Date().toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}
+          </p>
         </div>
       </div>
       <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",color:"rgba(255,180,80,0.55)",fontSize:"0.72rem",marginBottom:20,textAlign:"center" }}>Sent anonymously from somewhere in the universe.</p>
@@ -1703,6 +1707,10 @@ function ReceiveScreen({ onBack, onWrite, sound, onStart, onDone }) {
               {/* Letter text */}
               <p style={{ fontFamily:"'Kalam',cursive",fontSize:"1.3rem",fontWeight:700,lineHeight:2,color:"rgba(80,50,10,0.88)",margin:0,whiteSpace:"pre-wrap",position:"relative",zIndex:1,marginTop:subjectTag?16:0 }}>
                 {letterData.message}
+              </p>
+              {/* Date postmark */}
+              <p style={{ fontFamily:"'Georgia',serif",fontStyle:"italic",fontSize:"0.68rem",color:"rgba(160,110,30,0.45)",marginTop:18,marginBottom:0,textAlign:"right",letterSpacing:"0.04em" }}>
+                {new Date(letterData.created_at).toLocaleDateString("en-GB",{day:"numeric",month:"long",year:"numeric"})}
               </p>
             </div>
           </div>
