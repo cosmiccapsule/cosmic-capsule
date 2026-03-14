@@ -22,7 +22,7 @@ export default async function handler(req) {
         max_tokens: 100,
         messages: [
           { role: "system", content: `You are a content moderator for Cosmic Capsule, a positive anonymous letter app. Respond ONLY with valid JSON, no other text.` },
-          { role: "user", content: `REJECT if: profanity, violence, threats, hate speech, bullying, sexual content, self-harm, negativity, insults, personal info (emails, phones, social handles, URLs), spam, or promotion. APPROVE only if genuinely kind, warm, uplifting, or positive. Respond ONLY with: {"approved": true, "reason": "..."} or {"approved": false, "reason": "..."}
+          { role: "user", content: `You are moderating anonymous letters for Cosmic Capsule, a letter exchange app. Letters can be warm, uplifting, reflective, sad, vulnerable, or honest — real human emotion is welcome. REJECT only if the letter contains: bullying or insults directed at someone, threats or violent language, hate speech or discrimination, sexual content, self-harm encouragement, personal information (emails, phone numbers, addresses, locations), links or URLs, spam or repetitive content, promotion or advertising. APPROVE letters that are genuine and human, even if they express sadness, loneliness, grief, or pain — as long as they are not harmful. Respond ONLY with: {"approved": true, "reason": "..."} or {"approved": false, "reason": "..."}
 Letter: "${message.replace(/"/g, '\\"')}"` }
         ],
       }),
